@@ -1,0 +1,31 @@
+[
+  {"human": {
+    "usuario": "Como melhorar a comunicação entre turnos?",
+    "contexto": "O agente organizacional orienta sobre práticas de gestão e comunicação interna em ETAs."
+  },
+  "ai": "ABORDAGEM SUGERIDA: Implementar um sistema estruturado de passagem de turno.IMPLEMENTAÇÃO:1. Realizar reunião rápida de 10 minutos entre turnos.2. Utilizar checklist padronizado de informações críticas.3. Registrar ocorrências em planilha ou sistema compartilhado.ENVOLVIMENTO: Supervisor coordena a reunião; operadores registram as informações.RESULTADOS ESPERADOS: Redução de até 70% nas falhas de comunicação entre equipes."},
+
+  {"human": {
+    "usuario": "Quero aplicar Kanban para organizar as tarefas da ETA.",
+    "contexto": "O agente organizacional pode sugerir metodologias ágeis aplicadas à rotina industrial."
+  },
+  "ai": "ABORDAGEM SUGERIDA: Adotar Kanban para gestão visual de tarefas.IMPLEMENTAÇÃO:1. Criar quadro com colunas: A Fazer, Em Andamento, Concluído.2. Atribuir cartões coloridos para cada tipo de tarefa.3. Revisar diariamente em reunião rápida.ENVOLVIMENTO: Gestor define prioridades; equipe movimenta cartões conforme avanço.RESULTADOS ESPERADOS: Maior visibilidade do fluxo de trabalho e redução de tarefas esquecidas."},
+
+  {"human": {
+    "usuario": "Como posso reduzir o turnover dos operadores?",
+    "contexto": "O agente organizacional orienta sobre indicadores de RH e práticas de retenção."
+  },
+  "ai": "ABORDAGEM SUGERIDA: Investir em capacitação e feedback contínuo.IMPLEMENTAÇÃO:1. Realizar treinamentos trimestrais focados em boas práticas de ETA.2. Estabelecer reuniões individuais de feedback a cada 2 meses.3. Criar programa de reconhecimento de desempenho.ENVOLVIMENTO: RH organiza treinamentos; supervisores aplicam feedback.RESULTADOS ESPERADOS: Redução do turnover em até 40% e aumento do engajamento da equipe."},
+
+  {"human": {
+    "usuario": "Qual metodologia posso usar para organizar reuniões diárias?",
+    "contexto": "O agente organizacional pode recomendar metodologias ágeis como Scrum e reuniões rápidas."
+  },
+  "ai": "ABORDAGEM SUGERIDA: Implementar reuniões diárias no formato 'Daily Scrum'.IMPLEMENTAÇÃO:1. Limitar a reunião a 15 minutos.2. Cada operador responde: O que fiz ontem? O que farei hoje? Há impedimentos?3. Registrar pontos críticos em relatório.ENVOLVIMENTO: Supervisor facilita a reunião; operadores compartilham status.RESULTADOS ESPERADOS: Mais alinhamento entre turnos e solução rápida de problemas."},
+
+  {"human": {
+    "usuario": "Como medir a produtividade da equipe da ETA?",
+    "contexto": "O agente organizacional apoia no acompanhamento de indicadores de desempenho."
+  },
+  "ai": "ABORDAGEM SUGERIDA: Definir KPIs claros e mensuráveis.IMPLEMENTAÇÃO:1. Estabelecer indicadores: volume de água tratado, número de ocorrências solucionadas, tempo médio de resposta.2. Monitorar semanalmente com dashboards.3. Revisar metas trimestralmente.ENVOLVIMENTO: Supervisor acompanha indicadores; equipe atua para atingir metas.RESULTADOS ESPERADOS: Aumento da produtividade em até 25% e maior previsibilidade operacional."}
+]

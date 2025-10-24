@@ -1,0 +1,118 @@
+[
+    {
+        "title": "Conhecendo o Sinara",
+        "section": "Introdução",
+        "content": "O Sinara é uma plataforma digital (Web e Mobile) desenvolvida para modernizar e automatizar a coleta e gestão de dados industriais em Estações de Tratamento de Água (ETA). Com ele, operadores registram informações diretamente do chão de fábrica, enquanto administradores acompanham tudo em tempo real por meio de painéis claros e personalizáveis."
+    },
+    {
+        "title": "Nossa Missão",
+        "section": "Introdução",
+        "content": "O Sinara tem como missão conectar operação e administração, garantindo que as informações coletadas em campo sejam organizadas, visualizadas e utilizadas de forma eficiente. Ele reduz erros manuais, melhora a rastreabilidade, otimiza a tomada de decisão e facilita o atendimento a normas ambientais e auditorias."
+    },
+    {
+        "title": "Login e Hierarquia de Cadastro",
+        "section": "Introdução",
+        "content": "Cada usuário possui um login individual, garantindo segurança e controle de acesso."
+    },
+    {
+        "title": "Permissões",
+        "section": "Cadastro",
+        "content": "Ao cadastrar um novo operador, a administração define as permissões de acesso de forma granular, o que permite determinar exatamente quais formulários aquele operador está apto a preencher. Você pode limitar o acesso apenas às categorias necessárias para a função, como Forms de Captação, Forms de Pré-Tratamento, Forms de Tratamento ou Forms de Distribuição. Esse recurso aumenta a segurança dos dados e garante que os operadores vejam e preencham apenas as tarefas relevantes para o seu setor, otimizando a eficiência."
+    },
+    {
+        "title": "Férias",
+        "section": "Cadastro",
+        "content": "No cadastro de operadores, a administração define seu status de férias, indicando se ele está Com Férias ou Sem Férias. Essa funcionalidade garante que o sistema mantenha o controle atualizado sobre a força de trabalho disponível, o que é essencial para a correta distribuição e o fluxo contínuo das tarefas em campo."
+    },
+    {
+        "title": "Edição de perfil do operário",
+        "section": "Funcionalidades",
+        "content": "A qualquer momento, a administração pode editar as permissões de cada operador na plataforma web. Isso permite ajustar rapidamente quais categorias de formulários (Captação, Pré-Tratamento, Tratamento ou Distribuição) o operador pode preencher, adaptando o acesso conforme as mudanças de função ou setor."
+    },
+    {
+        "title": "Operadores",
+        "section": "Introdução",
+        "content": "utilizam o aplicativo mobile para registrar dados em campo."
+    },
+    {
+        "title": "Gestores e administradores",
+        "section": "Introdução",
+        "content": "acessam a plataforma web para configurar formulários, visualizar dashboards e gerenciar usuários. Os perfis de acesso são definidos por função, garantindo que cada colaborador veja apenas o necessário para seu trabalho."
+    },
+    {
+        "title": "Organização dos Dados, Notificações e Alertas",
+        "section": "Funcionalidades",
+        "content": "Todos os dados inseridos no aplicativo são organizados automaticamente no sistema. Notificações e alertas são emitidos para sinalizar pendências, devoluções de formulários ou necessidades de ação, como reposição de materiais. Isso garante que a comunicação entre chão de fábrica e administração seja rápida e eficiente."
+    },
+    {
+        "title": "Criação de Formulários",
+        "section": "Funcionalidades",
+        "content": "A criação de formulários é feita na plataforma web por administradores. O editor é simples e permite adicionar campos, definir tipos de dados (texto, número, data, lista) e criar regras de validação sem precisar de programação. Assim, cada formulário pode ser adaptado à realidade de cada estação ou processo."
+    },
+    {
+        "title": "Encaminhamento de Formulários (para operadores)",
+        "section": "Funcionalidades",
+        "content": "Após criados, os formulários são automaticamente enviados para os dispositivos móveis dos operadores. Eles aparecem organizados por setor ou função, facilitando o acesso em campo. Essa etapa elimina a necessidade de papéis, planilhas manuais ou repasses verbais."
+    },
+    {
+        "title": "Preenchimento de Formulários",
+        "section": "Funcionalidades",
+        "content": "O preenchimento é feito pelo aplicativo mobile de forma rápida e intuitiva. O operador insere dados numéricos, seleciona opções em listas e recebe validações automáticas caso algum valor esteja fora do padrão. Mesmo sem internet, o app funciona em modo offline e sincroniza as informações assim que a conexão é restabelecida."
+    },
+    {
+        "title": "Transformação de Formulários em Dashboards e Visualização",
+        "section": "Funcionalidades",
+        "content": "Após o envio, os dados são processados automaticamente e transformados em dashboards e gráficos na plataforma web. Administradores podem usar os painéis pré-configurados ou personalizar indicadores conforme suas necessidades, sem precisar de ferramentas externas. Isso permite acompanhar o desempenho das operações em tempo real."
+    },
+    {
+        "title": "Status dos formulários",
+        "section": "Funcionalidades",
+        "content": "Na página de formulários, o operador pode visualizar o status de todos os seus formulários atribuídos. Isso inclui os que estão pendentes de preenchimento, os respondidos (que podem ser abertos para consulta ou evidência), e principalmente os devolvidos."
+    },
+    
+    {
+        "title": "Histórico de registro de informações",
+        "section": "Funcionalidades",
+        "content": "Cada dado registrado gera um histórico completo dos formulários preenchidos além de, incluir: Quem inseriu (usuário), Quando (data e hora exata). Essas informações criam um rastro de auditoria seguro e confiável, essencial para controles internos e inspeções externas."
+    },
+    {
+        "title": "Bater Ponto",
+        "section": "Funcionalidades",
+        "content": "O Sinara permite que operadores registrem seus horários de entrada e saída diretamente pelo aplicativo. O processo pode ser feito com senha ou reconhecimento de usuário, garantindo segurança e praticidade. Os registros são salvos com data e hora, integrando o controle de presença às operações da estação."
+    },
+    {
+        "title": "Chatbot",
+        "section": "Funcionalidades",
+        "content": "Tanto no aplicativo mobile quanto na plataforma web, há um chatbot inteligente que auxilia usuários em tempo real. Ele responde dúvidas sobre o uso do sistema, formulários e também sobre processos de ETA, ajudando operadores e administradores a resolverem problemas rapidamente sem depender de suporte externo."
+    },
+    {
+        "title": "Notificação",
+        "section": "Funcionalidades",
+        "content": "O Sinara garante que operadores e gestão estejam sempre em sintonia através de um sistema de notificações inteligentes."
+    },
+    {
+        "title": "Gerenciamento de pontos",
+        "section": "Funcionalidades",
+        "content": "O Sinara oferece à Gestão uma visualização completa para o gerenciamento de pontos e turnos da equipe. Em um painel dedicado, a Gestão pode monitorar em tempo real os dados de cada operador, incluindo Nome e Data. O sistema exibe o Turno detalhado, mostrando o tempo exato que o operador iniciou a jornada e, caso já tenha finalizado, o tempo que o turno terminou. Se o turno estiver em andamento, apenas o horário de início é exibido. Complementando o acompanhamento, o painel informa as Horas Previstas para o turno, permitindo que a Gestão compare o previsto com o real e garanta a conformidade e a eficiência da jornada de trabalho."
+    },
+    {
+        "title": "Adicionar Responsáveis e Permissões",
+        "section": "Funcionalidades",
+        "content": "Administradores podem gerenciar perfis e permissões diretamente na plataforma web. É possível criar novos cargos/setores, adicionar operadores e definir quais formulários ou áreas cada um poderá acessar. Essa estrutura permite controle total sobre quem insere ou visualiza informações, garantindo organização e segurança."
+    },
+    {
+        "title": "Página inicial - Operador",
+        "section": "Operador",
+        "content": "A página inicial do aplicativo oferece ao operador uma visão imediata e essencial do fluxo de trabalho. Nela, o sistema exibe um painel de status que mostra a contagem exata dos formulários pendentes (a serem preenchidos), dos respondidos (concluídos e enviados) e dos devolvidos (que precisam de correção administrativa). Essa visualização objetiva é crucial para garantir a agilidade e o controle total do trabalho em campo."
+    },
+    {
+        "title": "Página de perfil",
+        "section": "Operador",
+        "content": "A Página de Perfil do Operário atua como um cartão de identificação e desempenho. Nela, o operador visualiza o Nome e o código da empresa em que trabalha. Além disso, a página exibe indicadores de produtividade e status: o total de Horas Trabalhadas, a contagem de Formulários Preenchidos, o total de Pontos Registrados e o status atual de férias (se está ou não de folga)."
+    },
+    {
+        "title": "Página inicial - Gestão",
+        "section": "Gestão",
+        "content": "A primeira tela da plataforma web é o painel de controle da Gestão. Nela, você visualiza a quantidade total de relatórios (formulários) que foram registrados e concluídos pelos operadores e a última pessoa a responder. Essas informações fornecem uma visão imediata e clara da produtividade do trabalho de campo na ETA."
+    }
+]

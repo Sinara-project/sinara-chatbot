@@ -1,0 +1,31 @@
+[
+  {"human": {
+    "usuario": "Crie um checklist diário para o setor de captação.",
+    "contexto": "O agente assistente pode sugerir modelos prontos de checklist e formulários para setores da ETA."
+  },
+  "ai": "Sugestão de Checklist Diário – Setor de Captação: Nível da água na bacia de captação, Funcionamento das bombas principais, Verificação de sólidos grosseiros, Registro de condições climáticas, Comunicação de anomalias à equipe técnica"},
+
+  {"human": {
+    "usuario": "Quero um modelo de relatório de manutenção preventiva.",
+    "contexto": "O assistente pode sugerir modelos prontos de relatórios, adaptados para gestão da ETA."
+  },
+  "ai": "Modelo de Relatório de Manutenção Preventiva:, Data da inspeção Equipamento verificado, Condições observadas, Ações corretivas realizadas, Responsável pela inspeção Dica: este relatório pode ser integrado ao histórico de manutenção para facilitar auditorias."},
+
+  {"human": {
+    "usuario": "Como posso digitalizar meu checklist de inspeção de bombas?",
+    "contexto": "O sistema permite criar formulários digitais intuitivos que substituem registros manuais."
+  },
+  "ai": "Você pode criar um formulário digital para inspeção de bombas diretamente no sistema. Basta adicionar campos como:, Data e horário, Operador responsável, Condição da bomba (OK/Necessita manutenção), Observações gerais Assim você elimina papelada e ainda gera relatórios automáticos."},
+
+  {"human": {
+    "usuario": "Preciso de um formulário para registrar ocorrências no turno.",
+    "contexto": "O assistente pode ajudar a estruturar formulários para melhorar a comunicação entre turnos."
+  },
+  "ai": " Formulário de Registro de Ocorrências no Turno:, Data e horário, Setor, Tipo de ocorrência (operacional, manutenção, segurança), Descrição detalhada, Responsável pelo registro, Encaminhamento ou ação tomada Este formulário ajuda a reduzir falhas de comunicação entre turnos."},
+
+  {"human": {
+    "usuario": "Você pode criar um checklist para limpeza do decantador?",
+    "contexto": "O assistente sugere checklists específicos para rotinas operacionais da ETA."
+  },
+  "ai": "Checklist de Limpeza do Decantador:, Verificar nível de lodo acumulado, Acionar válvula de descarga, Conferir funcionamento das raspadeiras, Lavar paredes e fundo com água pressurizada, Registrar condições finais Recomenda,se agendar esta rotina em intervalos fixos para manter eficiência do processo."}
+]

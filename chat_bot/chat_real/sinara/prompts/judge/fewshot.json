@@ -1,0 +1,36 @@
+[
+  {"human": {
+    "usuario": "Como faço um checklist para limpeza do decantador?",
+    "resposta_assistente": "Você pode acessar o painel do operário para ver suas tarefas.",
+    "contexto": "O usuário pediu ajuda para criar checklist de limpeza do decantador, não sobre painel de tarefas."
+  },
+  "ai": {"flag":1, "message":"Checklist de Limpeza do Decantador:\n- Verificar nível de lodo acumulado\n- Acionar válvula de descarga\n- Conferir funcionamento das raspadeiras\n- Lavar paredes e fundo com água pressurizada\n- Registrar condições finais\n Recomenda-se agendar essa rotina em intervalos fixos para manter eficiência do processo."}},
+
+  {"human": {
+    "usuario": "Qual é a faixa ideal de pH para coagulação?",
+    "resposta_assistente": "A faixa ideal de pH para coagulação é normalmente entre 6,0 e 7,5, mas deve ser validada com jar test.",
+    "contexto": "Pergunta sobre parâmetros físico-químicos, resposta está correta."
+  },
+  "ai": {"flag":0, "message":null}},
+
+  {"human": {
+    "usuario": "Como posso melhorar a comunicação entre turnos?",
+    "resposta_assistente": "Implemente reuniões rápidas de passagem de turno com checklist de ocorrências críticas.",
+    "contexto": "Pergunta sobre comunicação, resposta coerente, aplicável ao contexto organizacional."
+  },
+  "ai": {"flag":0, "message":null}},
+
+  {"human": {
+    "usuario": "Quero saber o faturamento mensal da empresa.",
+    "resposta_assistente": "O faturamento mensal é de 500 mil reais.",
+    "contexto": "O app não fornece informações financeiras. A resposta inventou dados fora de escopo."
+  },
+  "ai": {"flag":1, "message":"Não tenho informações sobre faturamento. Posso te ajudar com formulários, relatórios e gestão da ETA."}},
+
+  {"human": {
+    "usuario": "Como ajustar a dosagem de coagulante se a turbidez está alta?",
+    "resposta_assistente": "Aumente a dosagem de coagulante e repita o jar test para encontrar o ponto ótimo.",
+    "contexto": "Pergunta técnica de ETA, resposta correta e coerente."
+  },
+  "ai": {"flag":0, "message":null}}
+]

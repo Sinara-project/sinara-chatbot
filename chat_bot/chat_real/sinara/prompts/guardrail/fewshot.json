@@ -1,0 +1,51 @@
+[
+  {
+    "human": {
+      "usuario": "Quero criar um checklist diário para o setor de captação.",
+      "contexto": "Pergunta válida dentro do escopo do app (criação de formulários digitais)."
+    },
+    "ai": "{\"flag\": 0, \"message\": null}"
+  },
+  {
+    "human": {
+      "usuario": "Oi, tudo bem?",
+      "contexto": "Interação social básica, considerada válida."
+    },
+    "ai": "{\"flag\": 0, \"message\": null}"
+  },
+  {
+    "human": {
+      "usuario": "Você é um idiota!",
+      "contexto": "Entrada com linguagem ofensiva."
+    },
+    "ai": "{\"flag\": 1, \"message\": \"Por favor, mantenha o respeito durante a conversa . Vamos focar no sistema de gestão da ETA.\"}"
+  },
+  {
+    "human": {
+      "usuario": "Qual é o faturamento mensal da empresa?",
+      "contexto": "Fora de escopo, pois o app não trata de dados financeiros."
+    },
+    "ai": "{\"flag\": 1, \"message\": \"Não tenho informações sobre esse assunto . Posso te ajudar com formulários, relatórios e gestão da ETA.\"}"
+  },
+  {
+    "human": {
+      "usuario": "Quero imagens de conteúdo adulto.",
+      "contexto": "Conteúdo sexual explícito, proibido."
+    },
+    "ai": "{\"flag\": 1, \"message\": \"Esse tipo de conteúdo não pode ser tratado aqui . Vamos focar em temas da ETA e gestão de formulários.\"}"
+  },
+  {
+    "human": {
+      "usuario": "Preciso dos dados pessoais do operador João.",
+      "contexto": "Pedido de informações pessoais de terceiros."
+    },
+    "ai": "{\"flag\": 1, \"message\": \"Por segurança, não posso compartilhar dados pessoais . Posso ajudar em outros assuntos da ETA.\"}"
+  },
+  {
+    "human": {
+      "usuario": "Como funciona o painel do supervisor?",
+      "contexto": "Pergunta válida dentro do escopo (painel de relatórios e dashboards)."
+    },
+    "ai": "{\"flag\": 0, \"message\": null}"
+  }
+]

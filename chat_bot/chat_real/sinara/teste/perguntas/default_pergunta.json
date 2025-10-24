@@ -1,0 +1,42 @@
+[
+  {
+    "session_id": 30,
+    "message": "Crie um checklist diário para inspeção das bombas de captação."
+  },
+  {
+    "session_id": 31,
+    "message": "Qual é a faixa ideal de pH para coagulação na ETA?"
+  },
+  {
+    "session_id": 32,
+    "message": "Como melhorar a comunicação entre turnos na operação da ETA?"
+  },
+  {
+    "session_id": 33,
+    "message": "Preciso de um modelo de relatório de manutenção preventiva."
+  },
+  {
+    "session_id": 34,
+    "message": "A turbidez está acima de 5 NTU, o que devo ajustar?"
+  },
+  {
+    "session_id": 35,
+    "message": "Quero aplicar Kanban para organizar as tarefas da equipe da ETA."
+  },
+  {
+    "session_id": 36,
+    "message": "Como registrar uma ausência no sistema?"
+  },
+  {
+    "session_id": 37,
+    "message": "Pode criar um checklist de limpeza para o decantador?"
+  },
+  {
+    "session_id": 38,
+    "message": "O cloro residual está baixo, qual ajuste devo fazer?"
+  },
+  {
+    "session_id": 39,
+    "message": "Quais KPIs posso usar para medir a produtividade da equipe?"
+  }
+]
