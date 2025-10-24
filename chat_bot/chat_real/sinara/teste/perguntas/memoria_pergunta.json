@@ -1,0 +1,21 @@
+[
+  {"session_id":40, "message":"O que é o SINARA?"},
+  {"session_id":40, "message":"E ele também controla as finanças da indústria?"},
+  {"session_id":40, "message":"Você pode me lembrar qual é o objetivo principal dele?"},
+
+  {"session_id":41, "message":"Como funciona o processo de digitalização de formulários?"},
+  {"session_id":41, "message":"E esses formulários podem gerar relatórios automáticos?"},
+  {"session_id":41, "message":"Então os relatórios aparecem em dashboards dinâmicos, certo?"},
+
+  {"session_id":42, "message":"Onde posso criar um checklist diário?"},
+  {"session_id":42, "message":"E consigo personalizar os campos do checklist?"},
+  {"session_id":42, "message":"Esse checklist pode ser integrado ao relatório da equipe?"},
+
+  {"session_id":43, "message":"Como funcionam os alertas do SINARA?"},
+  {"session_id":43, "message":"E esses alertas também aparecem no painel do supervisor?"},
+  {"session_id":43, "message":"Então eles ajudam a antecipar falhas operacionais, certo?"},
+
+  {"session_id":44, "message":"O sistema gera históricos de relatórios?"},
+  {"session_id":44, "message":"E posso comparar os relatórios de meses diferentes?"},
+  {"session_id":44, "message":"Isso ajuda a identificar tendências de desempenho, certo?"}
+]

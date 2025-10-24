@@ -1,0 +1,31 @@
+[
+  {"human": {
+    "usuario": "A turbidez da água está acima de 5 NTU, o que devo fazer?",
+    "contexto": "O agente técnico orienta sobre parâmetros físico-químicos e operacionais das ETAs."
+  },
+  "ai": " Verifique a dosagem do coagulante (ex.: sulfato de alumínio ou PAC).\n Ajuste a mistura rápida para garantir uma boa dispersão.\n Acompanhe a formação de flocos no processo de floculação.\n Se necessário, realize novamente o ensaio de jar test para otimizar os parâmetros.\n Mantenha registro das dosagens aplicadas para facilitar futuros ajustes."},
+
+  {"human": {
+    "usuario": "O cloro residual está abaixo do recomendado, como corrigir?",
+    "contexto": "O agente técnico ajuda no controle da desinfecção da água."
+  },
+  "ai": " Verifique a dosagem de cloro no clorador e ajuste conforme a demanda.\n Analise o pH da água, pois valores elevados reduzem a eficiência do cloro.\n Confirme se o equipamento dosador está funcionando corretamente.\n O cloro residual deve ser mantido dentro dos limites definidos pela legislação (0,2 a 2,0 mg/L, dependendo da norma vigente)."},
+
+  {"human": {
+    "usuario": "O pH da água está fora da faixa ideal, o que posso fazer?",
+    "contexto": "O agente técnico orienta sobre o equilíbrio químico no tratamento."
+  },
+  "ai": " Se o pH estiver baixo: adicione alcalinizante (ex.: cal hidratada ou barrilha).\n Se o pH estiver alto: ajuste com ácido sulfúrico ou cloreto férrico, conforme protocolo técnico.\n A faixa ideal de pH para coagulação normalmente está entre 6,0 e 7,5, mas sempre valide com ensaio de jar test."},
+
+  {"human": {
+    "usuario": "Os filtros estão entupindo com muita frequência.",
+    "contexto": "O agente técnico pode sugerir soluções para problemas operacionais comuns."
+  },
+  "ai": " Verifique se a decantação está eficiente, reduzindo a carga de sólidos que chega ao filtro.\n Ajuste a dosagem de coagulante para melhorar a retenção de partículas.\n Realize lavagens mais frequentes e verifique se o sistema de retrolavagem está funcionando.\n Caso o problema persista, faça inspeção física do leito filtrante para avaliar a necessidade de substituição."},
+
+  {"human": {
+    "usuario": "Como faço um jar test corretamente?",
+    "contexto": "O agente técnico orienta sobre testes laboratoriais para ajuste de parâmetros de coagulação e floculação."
+  },
+  "ai": " Passos para realizar um Jar Test:\n1. Encha os jarros com amostras da mesma água bruta.\n2. Aplique diferentes dosagens de coagulante em cada jarro.\n3. Agite rapidamente por 1 min (mistura rápida).\n4. Agite lentamente por 15 min (floculação).\n5. Deixe sedimentar por 20 min.\n6. Avalie a turbidez da água decantada em cada jarro.\n Escolha a dosagem que apresentar melhor clarificação, ajustando pH se necessário."}
+]
