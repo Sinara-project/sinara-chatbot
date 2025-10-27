@@ -9,7 +9,7 @@ from langchain_core.prompts import (
 )
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from ..services.memory_assistente import get_memory
-from ..services.rag_service import retrieve_similar_context
+from ..services.rag_service import retrieve_similar_context, retrieve_pdf_context
 
 from dotenv import load_dotenv
 
@@ -103,8 +103,11 @@ def _try_models_and_invoke(prompt_payload):
 
 def run_rag_agent_assistente(query, session_id):
     try:
-        # Recupera contexto do RAG
-        context = retrieve_similar_context(query)
+        # Prioriza contexto do PDF (FAQ); fallback para Mongo/FAISS
+        try:
+            context = retrieve_pdf_context(query, top_k=6)
+        except Exception:
+            context = retrieve_similar_context(query)
     except Exception as e:
         logger.error(f"Erro na recuperação de contexto: {e}")
         return "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.", ""

@@ -8,12 +8,25 @@ import numpy as np
 import faiss
 import os
 
+# Extras para leitura de PDF + FAISS via LangChain (vector store)
+try:
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    from langchain_community.vectorstores import FAISS as LC_FAISS
+except Exception:
+    PyPDFLoader = None  # type: ignore
+    RecursiveCharacterTextSplitter = None  # type: ignore
+    LC_FAISS = None  # type: ignore
+
 # Cache em memória para FAISS
 _faiss_index = None
 _faiss_texts = []
 _faiss_dim = None
 _json_texts = []
 _json_vecs = None
+
+# Cache em memória para VectorStore a partir de PDF
+_pdf_vs_cache = {}
 
 def _ensure_faiss_index(mongo_uri: str, mongo_db: str):
     global _faiss_index, _faiss_texts, _faiss_dim
@@ -175,3 +188,64 @@ def retrieve_similar_context(query: str, top_k: int = 3):
     except Exception:
         pass
     return results
+
+
+def retrieve_pdf_context(
+    question: str,
+    top_k: int = 6,
+    chunk_size: int = 700,
+    chunk_overlap: int = 150,
+    pdf_env_var: str = "FAQ_PDF_PATH",
+    api_key_env: str = "GEMINI_API_KEY",
+) -> str:
+    """
+    Lê um PDF (definido via variável de ambiente `pdf_env_var`), faz chunking,
+    cria embeddings com Google Generative AI e busca os trechos mais similares.
+
+    Retorna um único texto concatenado com os trechos relevantes.
+    """
+    load_dotenv(override=True)
+
+    if not question or not str(question).strip():
+        raise ValueError("question deve ser uma string não-vazia")
+
+    api_key = os.getenv(api_key_env) or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            f"Defina {api_key_env} (ou GOOGLE_API_KEY) no .env/ambiente."
+        )
+
+    pdf_path = os.getenv(pdf_env_var)
+    if not pdf_path or not os.path.exists(pdf_path):
+        raise FileNotFoundError(
+            f"Caminho do PDF inválido. Defina {pdf_env_var} com um arquivo existente."
+        )
+
+    if PyPDFLoader is None or LC_FAISS is None or RecursiveCharacterTextSplitter is None:
+        raise ImportError(
+            "Dependências de PDF/VectorStore ausentes. Instale langchain-community e pypdf."
+        )
+
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/text-embedding-004",
+        google_api_key=api_key,
+        transport="rest",
+    )
+
+    cache_key = (pdf_path, chunk_size, chunk_overlap)
+    vs = _pdf_vs_cache.get(cache_key)
+    if vs is None:
+        loader = PyPDFLoader(pdf_path)
+        docs = loader.load()
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
+        chunks = splitter.split_documents(docs)
+        vs = LC_FAISS.from_documents(chunks, embeddings)
+        _pdf_vs_cache[cache_key] = vs
+
+    results = vs.similarity_search(question, k=max(1, int(top_k)))
+    context_text = "\n\n---\n\n".join(
+        [getattr(r, "page_content", "") for r in results if getattr(r, "page_content", None)]
+    )
+    return context_text
