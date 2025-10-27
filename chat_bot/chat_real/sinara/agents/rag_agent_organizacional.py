@@ -10,7 +10,7 @@ from langchain_core.prompts import (
 )
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from ..services.memory_tecnico import get_memory
-from ..services.rag_service import retrieve_similar_context
+from ..services.rag_service import retrieve_similar_context, retrieve_pdf_context
 from dotenv import load_dotenv
 
 # Carrega variáveis e chave
@@ -75,6 +75,14 @@ def run_rag_agent_organizacional(query, session_id):
         print(f"Erro na recuperação de contexto: {e}")
         return "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.", ""
 
+    # Tenta substituir por contexto do PDF (FAQ); mantém fallback caso falhe
+    try:
+        _pdf_ctx = retrieve_pdf_context(query, top_k=5)
+        if _pdf_ctx:
+            context = _pdf_ctx
+    except Exception:
+        pass
+
     try:
         memory = get_memory(session_id)
         memory_messages = getattr(memory, "messages", []) if memory is not None else []
@@ -90,4 +98,3 @@ def run_rag_agent_organizacional(query, session_id):
         print(f"Erro na geração da resposta: {e}")
 
     return "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.", ""
-
