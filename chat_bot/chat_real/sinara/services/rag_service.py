@@ -1,251 +1,308 @@
 from dotenv import load_dotenv
-from pymongo import MongoClient
-from pymongo.errors import PyMongoError, ConfigurationError, ServerSelectionTimeoutError
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from pathlib import Path
 import json
 import numpy as np
-import faiss
 import os
+import time
+import unicodedata
+import re
 
-# Extras para leitura de PDF + FAISS via LangChain (vector store)
-try:
-    from langchain_community.document_loaders import PyPDFLoader
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
-    from langchain_community.vectorstores import FAISS as LC_FAISS
-except Exception:
-    PyPDFLoader = None  # type: ignore
-    RecursiveCharacterTextSplitter = None  # type: ignore
-    LC_FAISS = None  # type: ignore
+"""
+Serviço RAG (Retrieval-Augmented Generation)
+Este módulo implementa a recuperação de contextos similares para consultas,
+usando embeddings do Google AI quando disponível ou BM25 como fallback offline.
+"""
 
-# Cache em memória para FAISS
-_faiss_index = None
-_faiss_texts = []
-_faiss_dim = None
-_json_texts = []
-_json_vecs = None
+# Cache para otimização de performance
+_json_texts: list[str] = []  # Chunks de texto processados
+_json_vecs: list[np.ndarray] | None = None  # Vetores de embedding correspondentes
+_json_mtime: float | None = None  # Timestamp do arquivo para verificar mudanças
 
-# Cache em memória para VectorStore a partir de PDF
-_pdf_vs_cache = {}
+# Cache para busca offline (BM25)
+_raw_docs: list[dict] | None = None  # Documentos originais do JSON
+_doc_texts: list[str] | None = None  # Textos completos por documento
+_doc_tokens: list[list[str]] | None = None  # Tokens por documento
+_doc_lengths: list[int] | None = None  # Comprimento (em tokens) por documento
+_avgdl: float | None = None  # Comprimento médio dos documentos
+_df_map: dict[str, int] | None = None  # Mapa de frequência dos termos
 
-def _ensure_faiss_index(mongo_uri: str, mongo_db: str):
-    global _faiss_index, _faiss_texts, _faiss_dim
-    if _faiss_index is not None:
-        return
-    client = None
-    try:
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-        coll = client[mongo_db]["contexto"]
-        docs = list(coll.find({"embedding": {"$exists": True}}))
-        if not docs:
-            return
-        embeddings = []
-        texts = []
-        for d in docs:
-            emb = d.get("embedding")
-            content = d.get("content") or d.get("conteudo")
-            if not isinstance(emb, (list, tuple)) or content is None:
-                continue
-            try:
-                vec = np.asarray(emb, dtype="float32").ravel()
-            except Exception:
-                continue
-            embeddings.append(vec)
-            texts.append(content)
-        if not embeddings:
-            return
-        mat = np.vstack(embeddings).astype("float32")
-        # Normaliza para usar similaridade de cosseno via produto interno
-        faiss.normalize_L2(mat)
-        dim = mat.shape[1]
-        index = faiss.IndexFlatIP(dim)
-        index.add(mat)
-        _faiss_index = index
-        _faiss_texts = texts
-        _faiss_dim = dim
-    except (ConfigurationError, ServerSelectionTimeoutError, PyMongoError):
-        # Falha ao conectar/carregar embeddings do Mongo: segue sem FAISS
-        pass
-    finally:
-        try:
-            if client is not None:
-                client.close()
-        except Exception:
-            pass
 
-def retrieve_similar_context(query: str, top_k: int = 3):
+def _normalize(s: str) -> str:
     """
-    Retorna os 'top_k' conteúdos mais similares ao 'query' a partir da coleção MongoDB 'contexto'.
-    Requisitos:
-      - Variáveis: GEMINI_API_KEY (ou GOOGLE_API_KEY), MONGO_URI, MONGO_DB
-      - Cada doc em 'contexto' deve ter: 'content' (str) e 'embedding' (list[float])
+    Normaliza texto removendo acentos e convertendo para minúsculas
+    Usado para padronizar textos antes da comparação
     """
-    load_dotenv(override=True)
+    s = s or ""
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode("ascii")
+    return s.lower()
 
+
+def _tokenize(s: str) -> list[str]:
+    """
+    Converte texto em lista de tokens (palavras normalizadas)
+    Usado para indexação e busca
+    """
+    return re.findall(r"[a-z0-9]+", _normalize(s))
+
+
+def _chunk_text(text: str, chunk_size: int = 700, chunk_overlap: int = 150) -> list[str]:
+    """
+    Divide texto em chunks menores com sobreposição
+    Permite processamento de textos longos mantendo contexto
+    
+    Args:
+        text: Texto a ser dividido
+        chunk_size: Tamanho máximo de cada chunk
+        chunk_overlap: Quantidade de sobreposição entre chunks
+    """
+    if not text:
+        return []
+    text = str(text)
+    chunk_size = max(200, int(chunk_size))
+    chunk_overlap = max(0, min(int(chunk_overlap), chunk_size - 1))
+    chunks = []
+    start = 0
+    n = len(text)
+    while start < n:
+        end = min(n, start + chunk_size)
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end == n:
+            break
+        start = end - chunk_overlap
+    return chunks
+
+
+def _build_offline_index(raw_list: list[dict]):
+    """
+    Constrói índice offline para busca BM25
+    Usado quando embeddings não estão disponíveis
+    
+    Processa documentos calculando:
+    - Textos completos
+    - Tokens por documento
+    - Estatísticas para BM25 (comprimentos, frequências)
+    """
+    global _raw_docs, _doc_texts, _doc_tokens, _doc_lengths, _avgdl, _df_map
+    _raw_docs = raw_list
+    _doc_texts = []
+    _doc_tokens = []
+    _doc_lengths = []
+    df: dict[str, int] = {}
+    for d in raw_list:
+        if not isinstance(d, dict):
+            continue
+        # Concatena título, seção e conteúdo
+        title = d.get("title") or d.get("titulo") or ""
+        section = d.get("section") or d.get("secao") or ""
+        content = d.get("content") or d.get("conteudo") or ""
+        full = "\n".join(x for x in [title, section, content] if x)
+        _doc_texts.append(full)
+        # Tokeniza e calcula estatísticas
+        toks = _tokenize(full)
+        _doc_tokens.append(toks)
+        _doc_lengths.append(len(toks))
+        for t in set(toks):
+            df[t] = df.get(t, 0) + 1
+    _df_map = df
+    _avgdl = (sum(_doc_lengths) / len(_doc_lengths)) if _doc_lengths else 0.0
+
+
+def _bm25_scores(qtoks: list[str]) -> list[tuple[float, int]]:
+    """
+    Calcula scores BM25 para tokens da query
+    BM25 é um algoritmo de ranking que considera:
+    - Frequência do termo (TF)
+    - Frequência inversa nos documentos (IDF)
+    - Comprimento do documento
+    
+    Args:
+        qtoks: Tokens da query
+    Returns:
+        Lista de (score, índice_documento)
+    """
+    if not _doc_tokens or _avgdl is None or _df_map is None:
+        return []
+    N = len(_doc_tokens)
+    k1 = 1.5  # Parâmetro de saturação de termo
+    b = 0.75  # Parâmetro de normalização de comprimento
+    scores = [0.0] * N
+    for i, toks in enumerate(_doc_tokens):
+        if not toks:
+            continue
+        dl = _doc_lengths[i] or 1
+        for q in qtoks:
+            df = _df_map.get(q, 0)
+            if df == 0:
+                continue
+            # Calcula IDF
+            idf = float(np.log((N - df + 0.5) / (df + 0.5) + 1.0))
+            # Calcula TF normalizado
+            tf = toks.count(q)
+            if tf == 0:
+                continue
+            denom = tf + k1 * (1 - b + b * dl / (_avgdl or 1))
+            scores[i] += idf * (tf * (k1 + 1)) / denom
+    return [(scores[i], i) for i in range(N)]
+
+
+def _ensure_loaded():
+    """
+    Garante que dados estão carregados e atualizados
+    Recarrega se arquivo fonte foi modificado
+    """
+    global _json_texts, _json_vecs, _json_mtime
+    base = Path(__file__).resolve().parents[1]
+    ctx_path = base / "db_script" / "contexto.json"
+    mtime = os.path.getmtime(ctx_path)
+    if (not _json_texts) or (_json_mtime is None) or (mtime != _json_mtime):
+        with open(ctx_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        raw_list = data if isinstance(data, list) else []
+        texts: list[str] = []
+        for d in raw_list:
+            if not isinstance(d, dict):
+                continue
+            title = d.get("title") or d.get("titulo") or ""
+            section = d.get("section") or d.get("secao") or ""
+            content = d.get("content") or d.get("conteudo") or ""
+            full = "\n".join(x for x in [title, section, content] if x)
+            if full:
+                texts.append(full)
+        chunks: list[str] = []
+        for t in texts:
+            chunks.extend(_chunk_text(t))
+        _json_texts = chunks
+        _json_vecs = None
+        _json_mtime = mtime
+        _build_offline_index(raw_list)
+
+
+def retrieve_similar_context(query: str, top_k: int = 3) -> list[str]:
+    """
+    Recupera contextos similares à query usando embeddings ou BM25
+    """
+    _ensure_loaded()
+    
+    # Tenta usar embeddings
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise RuntimeError("Defina GEMINI_API_KEY (ou GOOGLE_API_KEY) no .env/ambiente.")
-
-    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-    mongo_db  = os.getenv("MONGO_DB", "DB_Sinara")
-
-    # Tenta conectar ao Mongo, mas nao deixa a API travar caso falhe (ex.: DNS SRV bloqueado)
-    client = None
-    collection = None
-    try:
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-        collection = client[mongo_db]["contexto"]
-    except (ConfigurationError, ServerSelectionTimeoutError, PyMongoError):
-        # Sem conexao com Mongo; seguiremos com FAISS se ja carregado, caso contrario retorna []
-        pass
-
-    # Embeddings do Gemini (mesma API do embedding)
-    # Use a valid embedding model name for the Google Generative AI API
-    # For embeddings, the API expects full resource format "models/text-embedding-004"
-    emb = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
-        google_api_key=api_key,
-        transport="rest",  # evita grpc.aio e a necessidade de event loop
-    )
-
-    # Garante índice FAISS carregado (usa embeddings salvos no Mongo)
-    try:
-        _ensure_faiss_index(mongo_uri, mongo_db)
-    except Exception:
-        pass
-
-    # Vetor da consulta
-    query_vec = np.asarray(emb.embed_query(query), dtype="float32").ravel()
-
-    def cosine_sim(a: np.ndarray, b) -> float:
-        b = np.asarray(b, dtype=float).ravel()
-        na = np.linalg.norm(a)
-        nb = np.linalg.norm(b)
-        if na == 0 or nb == 0:
-            return 0.0
-        return float(np.dot(a, b) / (na * nb))
-
-    results = []
-    top_k = max(1, int(top_k))
-    # Se FAISS disponível, usa busca vetorial eficiente
-    if _faiss_index is not None and len(_faiss_texts) > 0:
-        q = query_vec[None, :].astype("float32")
-        faiss.normalize_L2(q)
-        _, idxs = _faiss_index.search(q, min(top_k, len(_faiss_texts)))
-        results = [_faiss_texts[i] for i in idxs[0] if 0 <= i < len(_faiss_texts)]
-    else:
-        # Fallback: varre e calcula cosseno em Python
-        score_docs = []
-        if collection is not None:
-            cursor = collection.find({"embedding": {"$exists": True}})
-            for doc in cursor:
-                emb_list = doc.get("embedding")
-                content  = doc.get("content") or doc.get("conteudo") or ""
-                if not isinstance(emb_list, (list, tuple)) or not content:
-                    continue
-                try:
-                    score = cosine_sim(query_vec, emb_list)
-                except Exception:
-                    continue
-                score_docs.append((score, content))
-            score_docs.sort(key=lambda x: x[0], reverse=True)
-            results = [content for score, content in score_docs[:top_k]]
-        else:
-            # Fallback local: usa arquivo contexto.json se Mongo/FAISS indisponiveis
-            global _json_texts, _json_vecs
-            try:
-                if not _json_texts:
-                    base = Path(__file__).resolve().parents[1]
-                    ctx_path = base / "db_script" / "contexto.json"
-                    with open(ctx_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    _json_texts = [
-                        (d.get("content") or d.get("conteudo") or "") for d in data if isinstance(d, dict)
-                    ]
-                if _json_vecs is None:
-                    # calcula embeddings locais uma vez
-                    _json_vecs = [
-                        np.asarray(emb.embed_query(t) if t else np.zeros_like(query_vec), dtype="float32").ravel()
-                        for t in _json_texts
-                    ]
-                pairs = []
-                for t, v in zip(_json_texts, _json_vecs):
+    if api_key and _json_texts:
+        try:
+            # Inicializa embeddings
+            emb = GoogleGenerativeAIEmbeddings(
+                model="models/text-embedding-004",
+                google_api_key=api_key
+            )
+            
+            # Gera embedding da query
+            query_vec = np.asarray(emb.embed_query(query), dtype="float32").ravel()
+            
+            # Gera ou recupera embeddings dos textos
+            global _json_vecs
+            if _json_vecs is None:
+                _json_vecs = []
+                for t in _json_texts:
                     if not t:
                         continue
-                    try:
-                        s = cosine_sim(query_vec, v)
-                        pairs.append((s, t))
-                    except Exception:
-                        continue
-                pairs.sort(key=lambda x: x[0], reverse=True)
-                results = [t for s, t in pairs[:top_k]]
-            except Exception:
-                results = []
+                    vec = np.asarray(emb.embed_query(t), dtype="float32").ravel()
+                    _json_vecs.append(vec)
+            
+            # Calcula similaridades
+            results = []
+            for t, v in zip(_json_texts, _json_vecs):
+                if not t:
+                    continue
+                    
+                # Similaridade por cosseno
+                norm_a = float(np.linalg.norm(query_vec))
+                norm_b = float(np.linalg.norm(v))
+                if norm_a and norm_b:
+                    sim = float(np.dot(query_vec, v) / (norm_a * norm_b))
+                    results.append((sim, t))
+                    
+            # Retorna top_k mais similares
+            if results:
+                results.sort(key=lambda x: x[0], reverse=True)
+                return [t for _, t in results[:top_k]]
+                
+        except Exception:
+            pass
+    
+    # Fallback para BM25
+    tokens = _tokenize(query)
+    scores = _bm25_scores(tokens)
+    scores.sort(key=lambda x: x[0], reverse=True)
+    
+    if not _doc_texts:
+        return []
+        
+    return [_doc_texts[i] for _, i in scores[:top_k]]
 
-    try:
-        if client is not None:
-            client.close()
-    except Exception:
-        pass
-    return results
 
-
-def retrieve_pdf_context(
-    question: str,
-    top_k: int = 6,
-    chunk_size: int = 700,
-    chunk_overlap: int = 150,
-    pdf_env_var: str = "FAQ_PDF_PATH",
-    api_key_env: str = "GEMINI_API_KEY",
-) -> str:
+def retrieve_similar_context_with_scores(query: str, top_k: int = 5):
     """
-    Lê um PDF (definido via variável de ambiente `pdf_env_var`), faz chunking,
-    cria embeddings com Google Generative AI e busca os trechos mais similares.
-
-    Retorna um único texto concatenado com os trechos relevantes.
+    Similar ao retrieve_similar_context, mas inclui scores
+    Útil para debugging e ajuste fino do sistema
+    
+    Args:
+        query: Texto da consulta
+        top_k: Número de contextos a retornar
+    
+    Returns:
+        Lista de tuplas (score, texto) ordenada por relevância
     """
     load_dotenv(override=True)
+    _ensure_loaded()
 
-    if not question or not str(question).strip():
-        raise ValueError("question deve ser uma string não-vazia")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    emb = None
+    if api_key:
+        try:
+            emb = GoogleGenerativeAIEmbeddings(
+                model="models/text-embedding-004",
+                google_api_key=api_key,
+                transport="rest",
+            )
+        except Exception:
+            emb = None
 
-    api_key = os.getenv(api_key_env) or os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise RuntimeError(
-            f"Defina {api_key_env} (ou GOOGLE_API_KEY) no .env/ambiente."
-        )
+    if emb is not None and _json_texts:
+        query_vec = np.asarray(emb.embed_query(query), dtype="float32").ravel()
+        global _json_vecs
+        if _json_vecs is None:
+            _json_vecs = [
+                np.asarray(emb.embed_query(t) if t else np.zeros_like(query_vec), dtype="float32").ravel()
+                for t in _json_texts
+            ]
 
-    pdf_path = os.getenv(pdf_env_var)
-    if not pdf_path or not os.path.exists(pdf_path):
-        raise FileNotFoundError(
-            f"Caminho do PDF inválido. Defina {pdf_env_var} com um arquivo existente."
-        )
+        def cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
+            na = float(np.linalg.norm(a))
+            nb = float(np.linalg.norm(b))
+            if na == 0.0 or nb == 0.0:
+                return 0.0
+            return float(np.dot(a, b) / (na * nb))
 
-    if PyPDFLoader is None or LC_FAISS is None or RecursiveCharacterTextSplitter is None:
-        raise ImportError(
-            "Dependências de PDF/VectorStore ausentes. Instale langchain-community e pypdf."
-        )
+        pairs = []
+        for t, v in zip(_json_texts, _json_vecs):
+            if not t:
+                continue
+            try:
+                s = cosine_sim(query_vec, v)
+                pairs.append((s, t))
+            except Exception:
+                continue
+        pairs.sort(key=lambda x: x[0], reverse=True)
+        k = max(1, int(top_k))
+        return pairs[:k]
 
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
-        google_api_key=api_key,
-        transport="rest",
-    )
+    # Fallback offline: BM25
+    qtoks = _tokenize(query)
+    bm = _bm25_scores(qtoks)
+    bm.sort(key=lambda x: x[0], reverse=True)
+    k = max(1, int(top_k))
+    if not _doc_texts:
+        return []
+    return [(s, _doc_texts[i]) for s, i in bm[:k]]
 
-    cache_key = (pdf_path, chunk_size, chunk_overlap)
-    vs = _pdf_vs_cache.get(cache_key)
-    if vs is None:
-        loader = PyPDFLoader(pdf_path)
-        docs = loader.load()
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap
-        )
-        chunks = splitter.split_documents(docs)
-        vs = LC_FAISS.from_documents(chunks, embeddings)
-        _pdf_vs_cache[cache_key] = vs
-
-    results = vs.similarity_search(question, k=max(1, int(top_k)))
-    context_text = "\n\n---\n\n".join(
-        [getattr(r, "page_content", "") for r in results if getattr(r, "page_content", None)]
-    )
-    return context_text

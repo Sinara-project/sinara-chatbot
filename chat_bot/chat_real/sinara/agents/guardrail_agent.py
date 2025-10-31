@@ -26,9 +26,7 @@ def _load_api_key() -> str | None:
         load_dotenv(dotenv_path=local_env, override=True)
     return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
-API_KEY = _load_api_key()
-if not API_KEY:
-    raise RuntimeError("Defina GEMINI_API_KEY (ou GOOGLE_API_KEY) no .env/ambiente.")
+# API key carregada sob demanda em _get_chat_model
 
 
 class GuardrailOutput(BaseModel):
@@ -78,9 +76,12 @@ guardrail_prompt = ChatPromptTemplate.from_messages(
 
 # Conecta com o Gemini para geração de respostas (instanciado sob demanda)
 def _get_chat_model(model_name: str):
+    api_key = _load_api_key()
+    if not api_key:
+        raise RuntimeError("API key ausente")
     return ChatGoogleGenerativeAI(
         model=model_name,
-        google_api_key=API_KEY,
+        google_api_key=api_key,
     ).with_structured_output(GuardrailOutput)
 
 
