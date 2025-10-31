@@ -1,47 +1,43 @@
-﻿import os, json, logging
+﻿import os
+import json
+import logging
+from dotenv import load_dotenv
 from langchain.prompts.few_shot import FewShotChatMessagePromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
     HumanMessagePromptTemplate,
-    AIMessagePromptTemplate
+    AIMessagePromptTemplate,
 )
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
 from ..services.memory_assistente import get_memory
-from ..services.rag_service import retrieve_similar_context, retrieve_pdf_context
+from ..services.rag_service import retrieve_similar_context, retrieve_similar_context_with_scores
 
-from dotenv import load_dotenv
 
-# Carrega variáveis do .env para o processo ANTES de instanciar o LLM
 load_dotenv(override=True)
-
-API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-if not API_KEY:
-    raise RuntimeError(
-        "Defina GEMINI_API_KEY (ou GOOGLE_API_KEY) no ambiente/.env antes de iniciar."
-    )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Conecta com o Gemini para geração de respostas
+
 def _get_chat_model(model_name: str):
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError("API key ausente")
     return ChatGoogleGenerativeAI(
         model=model_name,
-        google_api_key=API_KEY,
+        google_api_key=api_key,
         temperature=0.3,
     )
 
 
-
-# Modelos fallback conhecidos (ordem de preferência)
 FALLBACK_MODELS = [
     "gemini-pro",
     "gemini-1.0-pro",
 ]
 
-# Lê o template do prompt
+
 system_prompt_path = os.path.join(
     os.path.dirname(__file__), "../prompts/rag/assistente/system_prompt_assistente.txt"
 )
@@ -49,87 +45,88 @@ with open(system_prompt_path, "r", encoding="utf-8") as x:
     system_text = x.read()
 system_prompt = ("system", system_text)
 
-# Lê exemplos few-shot
 fewshots_path = os.path.join(
     os.path.dirname(__file__), "../prompts/rag/assistente/fewshot.json"
 )
 with open(fewshots_path, "r", encoding="utf-8") as x:
     shots = json.load(x)
 
-example_prompt = ChatPromptTemplate.from_messages([
-    HumanMessagePromptTemplate.from_template("{human}"),
-    AIMessagePromptTemplate.from_template("{ai}")
-])
+example_prompt = ChatPromptTemplate.from_messages(
+    [
+        HumanMessagePromptTemplate.from_template("{human}"),
+        AIMessagePromptTemplate.from_template("{ai}"),
+    ]
+)
 
 fewshots = FewShotChatMessagePromptTemplate(
     examples=shots,
-    example_prompt=example_prompt
+    example_prompt=example_prompt,
 )
 
-# Monta prompt final (inclui histórico opcional e query)
-rag_prompt = ChatPromptTemplate.from_messages([
-    system_prompt,
-    fewshots,
-    MessagesPlaceholder("memory"),
-    ("human", "Contexto:\n{context}\n\nPergunta:\n{query}")
-])
+rag_prompt = ChatPromptTemplate.from_messages(
+    [
+        system_prompt,
+        fewshots,
+        MessagesPlaceholder("memory"),
+        ("human", "Contexto:\n{context}\n\nPergunta:\n{query}"),
+    ]
+)
 
-def _try_models_and_invoke(prompt_payload):
-    """
-    Tenta instanciar/invocar modelos em sequência até obter sucesso.
-    prompt_payload: dicionário com keys necessárias para formatar/invocar o prompt.
-    Retorna (response_content, used_model) ou (None, None) em falha.
-    """
-    env_model = os.getenv("GEMINI_MODEL_ASSISTENTE") or os.getenv("GEMINI_CHAT_MODEL")
-    candidates = []
-    if env_model:
-        candidates.append(env_model)
-    candidates.extend(FALLBACK_MODELS)
-
-    for candidate in candidates:
-        try:
-            logger.info(f"Tentando modelo: {candidate}")
-            model = _get_chat_model(candidate)
-            output = model.invoke(prompt_payload)
-            # output pode ser objeto com .content (compatível com uso anterior)
-            content = getattr(output, "content", None) or str(output)
-            return content, candidate
-        except Exception as e:
-            logger.warning(f"Modelo {candidate} falhou: {e}")
-            # tenta próximo
-            continue
-
-    return None, None
 
 def run_rag_agent_assistente(query, session_id):
     try:
-        # Prioriza contexto do PDF (FAQ); fallback para Mongo/FAISS
-        try:
-            context = retrieve_pdf_context(query, top_k=6)
-        except Exception:
-            context = retrieve_similar_context(query)
+        ctx = retrieve_similar_context(query)
+        context = "\n".join(ctx) if isinstance(ctx, list) else str(ctx or "")
     except Exception as e:
         logger.error(f"Erro na recuperação de contexto: {e}")
-        return "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.", ""
+        return (
+            "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.",
+            "",
+        )
 
     try:
         memory = get_memory(session_id)
-        # Prepara payload para o prompt (mantendo compatibilidade com formatação original)
-        memory_messages = getattr(memory, "messages", [])
-        prompt_payload = rag_prompt.format(context=context, query=query, memory=memory_messages)
+        env_model = os.getenv("GEMINI_MODEL_ASSISTENTE") or os.getenv("GEMINI_CHAT_MODEL")
+        candidates = [m for m in [env_model, *FALLBACK_MODELS] if m]
 
-        response_content, used_model = _try_models_and_invoke(prompt_payload)
-        if response_content is not None:
-            return response_content, context
+        for candidate in candidates:
+            try:
+                logger.info(f"Tentando modelo: {candidate}")
+                model = _get_chat_model(candidate)
+                chain = rag_prompt | model
+                output = chain.invoke(
+                    {
+                        "context": context,
+                        "query": query,
+                        "memory": getattr(memory, "messages", []),
+                    }
+                )
+                content = getattr(output, "content", None) or str(output)
+                return content, context
+            except Exception as e:
+                logger.warning(f"Modelo {candidate} falhou: {e}")
+                continue
 
         logger.error("Nenhum modelo disponível respondeu com sucesso.")
-        return "Desculpe, não foi possível gerar a resposta no momento. Tente novamente mais tarde.", ""
+        # Fallback baseado na melhor correspondÃªncia
+        pairs = retrieve_similar_context_with_scores(query, top_k=3)
+        if pairs:
+            _score, text = pairs[0]           
+            return (str(text).strip()[:1200], context)
+        return ("Não encontrei essainformação no nosso FAQ.", context)
 
     except Exception as e:
         logger.error(f"Erro na geração da resposta: {e}")
-        return "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.", ""
+        pairs = retrieve_similar_context_with_scores(query, top_k=3)
+        if pairs:
+            _score, text = pairs[0]
+            return (str(text).strip()[:1200], context)
+        return ("Nãoo encontrei essa informação no nosso FAQ.", context)
 
-
-
-
-
+    except Exception as e:
+        logger.error(f"Erro na geração da resposta: {e}")
+        pairs = retrieve_similar_context_with_scores(query, top_k=3)
+        if pairs:
+            _score, text = pairs[0]
+            return (str(text).strip()[:1200], context)
+        return ("Nãoo encontrei essa informação no nosso FAQ.", context)

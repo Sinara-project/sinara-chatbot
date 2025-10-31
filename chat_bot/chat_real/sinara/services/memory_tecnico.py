@@ -7,7 +7,7 @@ load_dotenv(override=True)
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB = os.getenv("MONGO_DB", "DB_Sinara")
 
-# Coleção onde vamos salvar o histórico (ajuste o nome se quiser)
+# Coleção para salvar o histórico 
 COLLECTION = "chat_history"
 
 def get_memory(session_id: str):

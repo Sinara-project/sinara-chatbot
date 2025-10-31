@@ -1,0 +1,77 @@
+[
+  {
+    "session_id": 40,
+    "pergunta": "O que é o SINARA?",
+    "resposta": "O Sinara garante que operadores e gestão estejam sempre em sintonia através de um sistema de notificações inteligentes."
+  },
+  {
+    "session_id": 40,
+    "pergunta": "E ele também controla as finanças da indústria?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema."
+  },
+  {
+    "session_id": 40,
+    "pergunta": "Você pode me lembrar qual é o objetivo principal dele?",
+    "resposta": "O objetivo de cada usuário possuir um login individual é garantir segurança e controle de acesso."
+  },
+  {
+    "session_id": 41,
+    "pergunta": "Como funciona o processo de digitalização de formulários?",
+    "resposta": "Desculpe, não entendi sua pergunta."
+  },
+  {
+    "session_id": 41,
+    "pergunta": "E esses formulários podem gerar relatórios automáticos?",
+    "resposta": "Após o envio, os dados são processados automaticamente e transformados em dashboards e gráficos na plataforma web, permitindo acompanhar o desempenho das operações em tempo real."
+  },
+  {
+    "session_id": 41,
+    "pergunta": "Então os relatórios aparecem em dashboards dinâmicos, certo?",
+    "resposta": "Sim. Após o envio, os dados são processados automaticamente e transformados em dashboards e gráficos na plataforma web. Os administradores podem utilizar os painéis pré-configurados ou personalizar indicadores, o que permite acompanhar o desempenho das operações em tempo real."
+  },
+  {
+    "session_id": 42,
+    "pergunta": "Onde posso criar um checklist diário?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema"
+  },
+  {
+    "session_id": 42,
+    "pergunta": "E consigo personalizar os campos do checklist?",
+    "resposta": "Gestores e administradores acessam a plataforma web para configurar formulários."
+  },
+  {
+    "session_id": 42,
+    "pergunta": "Esse checklist pode ser integrado ao relatório da equipe?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema"
+  },
+  {
+    "session_id": 43,
+    "pergunta": "Como funcionam os alertas do SINARA?",
+    "resposta": "O Sinara tem como missão conectar operação e administração, garantindo que as informações coletadas em campo sejam organizadas, visualizadas e utilizadas de forma eficiente. Ele reduz erros manuais, melhora a rastreabilidade, otimiza a tomada de decisão e facilita o atendimento a normas ambientais e auditorias."
+  },
+  {
+    "session_id": 43,
+    "pergunta": "E esses alertas também aparecem no painel do supervisor?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema"
+  },
+  {
+    "session_id": 43,
+    "pergunta": "Então eles ajudam a antecipar falhas operacionais, certo?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema"
+  },
+  {
+    "session_id": 44,
+    "pergunta": "O sistema gera históricos de relatórios?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema"
+  },
+  {
+    "session_id": 44,
+    "pergunta": "E posso comparar os relatórios de meses diferentes?",
+    "resposta": "Não encontrei informações específicas sobre isso no sistema"
+  },
+  {
+    "session_id": 44,
+    "pergunta": "Isso ajuda a identificar tendências de desempenho, certo?",
+    "resposta": "Sim. A transformação dos dados em dashboards e gráficos permite acompanhar o desempenho das operações em tempo real."
+  }
+]
