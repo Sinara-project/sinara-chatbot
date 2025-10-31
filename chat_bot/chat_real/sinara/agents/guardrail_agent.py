@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from typing import Union
 
 from dotenv import load_dotenv
