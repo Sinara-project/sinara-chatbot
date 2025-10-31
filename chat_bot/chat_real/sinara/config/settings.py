@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     """Configurações globais da aplicação"""
@@ -20,18 +21,18 @@ class Settings(BaseSettings):
     # ===================================
     # IA (modelos adicionais do Gemini)
     # ===================================
-    GEMINI_MODEL_GUARDRAIL: str | None = None
-    GEMINI_MODEL_JUDGE: str | None = None
-    GEMINI_MODEL_ASSISTENTE: str | None = None
-    GEMINI_MODEL_TECNICO: str | None = None
-    GEMINI_MODEL_ORG: str | None = None
-    GEMINI_CHAT_MODEL: str | None = None
+    GEMINI_MODEL_GUARDRAIL: Optional[str] = None
+    GEMINI_MODEL_JUDGE: Optional[str] = None
+    GEMINI_MODEL_ASSISTENTE: Optional[str] = None
+    GEMINI_MODEL_TECNICO: Optional[str] = None
+    GEMINI_MODEL_ORG: Optional[str] = None
+    GEMINI_CHAT_MODEL: Optional[str] = None
 
     # ===================================
     # Banco de Dados MongoDB
     # ===================================
-    MONGO_URI: str | None = None
-    MONGO_DB: str | None = None
+    MONGO_URI: Optional[str] = None
+    MONGO_DB: Optional[str] = None
     
     # ===================================
     # RAG (busca de contexto)
@@ -42,6 +43,6 @@ class Settings(BaseSettings):
     # Configuração geral
     # ===================================
     class Config:
-        env_file = ".env"   # garante que as variáveis do arquivo .env sejam lidas
+        env_file = ".env"
 
 settings = Settings()
