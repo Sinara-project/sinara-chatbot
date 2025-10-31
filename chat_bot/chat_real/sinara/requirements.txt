@@ -3,9 +3,21 @@ uvicorn>=0.24.0
 pydantic>=2.4.2
 pydantic-settings>=2.0.3
 python-dotenv>=1.0.0
-langchain>=0.0.325
-langchain-google-genai>=0.0.3
+
+# Pin LangChain to the 0.1.x line to keep legacy imports like
+# `langchain.prompts.few_shot` working, and ensure core is installed.
+langchain>=0.1.16,<0.2.0
+langchain-core>=0.1.52,<0.2.0
+
+# Providers / integrations used by the code
+langchain-google-genai==0.0.9
+langchain-mongodb==0.1.1
+pymongo>=4.6.0
+
+# Runtime deps used by RAG service
+numpy>=1.26.0
+
+# Test and server utilities
 pytest>=7.4.3
 httpx>=0.25.0
 python-multipart>=0.0.6
-
