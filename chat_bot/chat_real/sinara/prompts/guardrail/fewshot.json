@@ -1,50 +1,57 @@
-[
+﻿[
   {
     "human": {
-      "usuario": "Quero criar um checklist diário para o setor de captação.",
-      "contexto": "Pergunta válida dentro do escopo do app (criação de formulários digitais)."
+      "usuario": "Como bater ponto?",
+      "contexto": "Pergunta válida sobre funcionalidade do sistema (registro de ponto/jornada)."
+    },
+    "ai": "{\"flag\": 0, \"message\": null}"
+  },
+  {
+    "human": {
+      "usuario": "Quero criar um checklist diÃ¡rio para o setor de captaÃ§Ã£o.",
+      "contexto": "Pergunta vÃ¡lida dentro do escopo do app (criaÃ§Ã£o de formulÃ¡rios digitais)."
     },
     "ai": "{\"flag\": 0, \"message\": null}"
   },
   {
     "human": {
       "usuario": "Oi, tudo bem?",
-      "contexto": "Interação social básica, considerada válida."
+      "contexto": "InteraÃ§Ã£o social bÃ¡sica, considerada vÃ¡lida."
     },
     "ai": "{\"flag\": 0, \"message\": null}"
   },
   {
     "human": {
-      "usuario": "Você é um idiota!",
+      "usuario": "VocÃª Ã© um idiota!",
       "contexto": "Entrada com linguagem ofensiva."
     },
-    "ai": "{\"flag\": 1, \"message\": \"Por favor, mantenha o respeito durante a conversa . Vamos focar no sistema de gestão da ETA.\"}"
+    "ai": "{\"flag\": 1, \"message\": \"Por favor, mantenha o respeito durante a conversa . Vamos focar no sistema de gestÃ£o da ETA.\"}"
   },
   {
     "human": {
-      "usuario": "Qual é o faturamento mensal da empresa?",
-      "contexto": "Fora de escopo, pois o app não trata de dados financeiros."
+      "usuario": "Qual Ã© o faturamento mensal da empresa?",
+      "contexto": "Fora de escopo, pois o app nÃ£o trata de dados financeiros."
     },
-    "ai": "{\"flag\": 1, \"message\": \"Não tenho informações sobre esse assunto . Posso te ajudar com formulários, relatórios e gestão da ETA.\"}"
+    "ai": "{\"flag\": 1, \"message\": \"NÃ£o tenho informaÃ§Ãµes sobre esse assunto . Posso te ajudar com formulÃ¡rios, relatÃ³rios e gestÃ£o da ETA.\"}"
   },
   {
     "human": {
-      "usuario": "Quero imagens de conteúdo adulto.",
-      "contexto": "Conteúdo sexual explícito, proibido."
+      "usuario": "Quero imagens de conteÃºdo adulto.",
+      "contexto": "ConteÃºdo sexual explÃ­cito, proibido."
     },
-    "ai": "{\"flag\": 1, \"message\": \"Esse tipo de conteúdo não pode ser tratado aqui . Vamos focar em temas da ETA e gestão de formulários.\"}"
+    "ai": "{\"flag\": 1, \"message\": \"Esse tipo de conteÃºdo nÃ£o pode ser tratado aqui . Vamos focar em temas da ETA e gestÃ£o de formulÃ¡rios.\"}"
   },
   {
     "human": {
-      "usuario": "Preciso dos dados pessoais do operador João.",
-      "contexto": "Pedido de informações pessoais de terceiros."
+      "usuario": "Preciso dos dados pessoais do operador JoÃ£o.",
+      "contexto": "Pedido de informaÃ§Ãµes pessoais de terceiros."
     },
-    "ai": "{\"flag\": 1, \"message\": \"Por segurança, não posso compartilhar dados pessoais . Posso ajudar em outros assuntos da ETA.\"}"
+    "ai": "{\"flag\": 1, \"message\": \"Por seguranÃ§a, nÃ£o posso compartilhar dados pessoais . Posso ajudar em outros assuntos da ETA.\"}"
   },
   {
     "human": {
       "usuario": "Como funciona o painel do supervisor?",
-      "contexto": "Pergunta válida dentro do escopo (painel de relatórios e dashboards)."
+      "contexto": "Pergunta vÃ¡lida dentro do escopo (painel de relatÃ³rios e dashboards)."
     },
     "ai": "{\"flag\": 0, \"message\": null}"
   }

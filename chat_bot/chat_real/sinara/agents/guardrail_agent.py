@@ -49,7 +49,7 @@ system_prompt = ("system", system_text)
 fewshots_path = os.path.join(
     os.path.dirname(__file__), "../prompts/guardrail/fewshot.json"
 )
-with open(fewshots_path, "r", encoding="utf-8") as x:
+with open(fewshots_path, "r", encoding="utf-8-sig") as x:
     shots = json.load(x)
 
 example_prompt = ChatPromptTemplate.from_messages(

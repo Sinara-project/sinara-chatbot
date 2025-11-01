@@ -186,6 +186,15 @@ def retrieve_similar_context(query: str, top_k: int = 3) -> list[str]:
     """
     _ensure_loaded()
     
+    # Heurística: ampliar K para consultas de funcionalidades do sistema (ex.: "bater ponto", "login", "página", "perfil")
+    try:
+        qn = _normalize(query)
+        qtokens = set(_tokenize(qn))
+        widen_kw = {"ponto", "bater", "registro", "login", "pagina", "perfil", "dashboard", "notificacao", "sistema", "web", "mobile"}
+        dyn_k = max(top_k, 8) if (qtokens & widen_kw) else top_k
+    except Exception:
+        dyn_k = top_k
+
     # Tenta usar embeddings
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if api_key and _json_texts:
@@ -222,10 +231,10 @@ def retrieve_similar_context(query: str, top_k: int = 3) -> list[str]:
                     sim = float(np.dot(query_vec, v) / (norm_a * norm_b))
                     results.append((sim, t))
                     
-            # Retorna top_k mais similares
+            # Retorna top_k (dinâmico) mais similares
             if results:
                 results.sort(key=lambda x: x[0], reverse=True)
-                return [t for _, t in results[:top_k]]
+                return [t for _, t in results[:dyn_k]]
                 
         except Exception:
             pass
@@ -238,7 +247,7 @@ def retrieve_similar_context(query: str, top_k: int = 3) -> list[str]:
     if not _doc_texts:
         return []
         
-    return [_doc_texts[i] for _, i in scores[:top_k]]
+    return [_doc_texts[i] for _, i in scores[:dyn_k]]
 
 
 def retrieve_similar_context_with_scores(query: str, top_k: int = 5):
@@ -305,4 +314,3 @@ def retrieve_similar_context_with_scores(query: str, top_k: int = 5):
     if not _doc_texts:
         return []
     return [(s, _doc_texts[i]) for s, i in bm[:k]]
-

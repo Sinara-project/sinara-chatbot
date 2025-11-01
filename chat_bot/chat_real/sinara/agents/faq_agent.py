@@ -1,4 +1,4 @@
-import os
+﻿import os
 import logging
 import re
 import unicodedata
@@ -16,42 +16,49 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class FAQAgent:
+class AgentePerguntas:
+    """Agente responsÃ¡vel por responder perguntas frequentes do sistema"""
+    
     def __init__(self):
-        self.model = self._initialize_model()
-        self.prompt = self._create_prompt()
+        """Inicializa o agente com modelo e prompt"""
+        self.modelo = self._inicializar_modelo()
+        self.prompt = self._criar_prompt()
 
-    def _initialize_model(self) -> Optional[ChatGoogleGenerativeAI]:
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if not api_key:
+    def _inicializar_modelo(self) -> Optional[ChatGoogleGenerativeAI]:
+        """Inicializa o modelo de IA com configuraÃ§Ãµes do ambiente"""
+        chave_api = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not chave_api:
             return None
-        model_name = (
+            
+        nome_modelo = (
             os.getenv("GEMINI_MODEL_FAQ")
             or os.getenv("GEMINI_CHAT_MODEL")
             or "gemini-1.5-flash-latest"
         )
+        
         try:
             return ChatGoogleGenerativeAI(
-                model=model_name,
-                google_api_key=api_key,
+                model=nome_modelo,
+                google_api_key=chave_api,
                 temperature=0.1,
             )
         except Exception:
             return None
 
-    def _create_prompt(self) -> ChatPromptTemplate:
+    def _criar_prompt(self) -> ChatPromptTemplate:
+        """Cria o template do prompt para o modelo"""
         return ChatPromptTemplate.from_messages([
             (
                 "system",
-                """Você é um especialista no sistema Sinara, focado em explicar suas funcionalidades.
+                """VocÃª Ã© um especialista no sistema Sinara, focado em explicar suas funcionalidades.
 
 IMPORTANTE:
-1. Use SOMENTE as informações do contexto fornecido
-2. Se encontrar a informação no contexto, forneça uma resposta direta e objetiva
-3. Inclua detalhes específicos mencionados no contexto
-4. Se a informação não existir no contexto, responda apenas: "Não encontrei informações específicas sobre isso no sistema"
-5. Não mencione o contexto na resposta, apenas use seu conteúdo
-6. Não invente ou adicione informações além do contexto""",
+1. Use SOMENTE as informaÃ§Ãµes do contexto fornecido
+2. Se encontrar a informaÃ§Ã£o no contexto, forneÃ§a uma resposta direta e objetiva
+3. Inclua detalhes especÃ­ficos mencionados no contexto
+4. Se a informaÃ§Ã£o nÃ£o existir no contexto, responda apenas: "NÃ£o encontrei informaÃ§Ãµes especÃ­ficas sobre isso no sistema"
+5. NÃ£o mencione o contexto na resposta, apenas use seu conteÃºdo
+6. NÃ£o invente ou adicione informaÃ§Ãµes alÃ©m do contexto""",
             ),
             (
                 "human",
@@ -61,22 +68,24 @@ IMPORTANTE:
 PERGUNTA:
 {query}
 
-Responda usando APENAS as informações do contexto acima.""",
+Responda usando APENAS as informaÃ§Ãµes do contexto acima.""",
             ),
         ])
 
-    def _parse_context(self, ctx: str) -> Dict[str, str]:
-        parts = ctx.split("\n")
-        result = {"title": "", "section": "", "content": ""}
-        if len(parts) >= 3:
-            result["title"] = parts[0].strip()
-            result["section"] = parts[1].strip()
-            result["content"] = "\n".join(parts[2:]).strip()
+    def _analisar_contexto(self, ctx: str) -> Dict[str, str]:
+        """Analisa e separa o contexto em tÃ­tulo, seÃ§Ã£o e conteÃºdo"""
+        partes = ctx.split("\n")
+        resultado = {"titulo": "", "secao": "", "conteudo": ""}
+        if len(partes) >= 3:
+            resultado["titulo"] = partes[0].strip()
+            resultado["secao"] = partes[1].strip()
+            resultado["conteudo"] = "\n".join(partes[2:]).strip()
         else:
-            result["content"] = ctx.strip()
-        return result
+            resultado["conteudo"] = ctx.strip()
+        return resultado
 
-    def _normalize(self, s: str) -> str:
+    def _normalizar(self, s: str) -> str:
+        """Normaliza texto removendo acentos e caracteres especiais"""
         s = s or ""
         s = unicodedata.normalize("NFKD", s)
         s = s.encode("ascii", "ignore").decode("ascii")
@@ -84,115 +93,120 @@ Responda usando APENAS as informações do contexto acima.""",
         s = re.sub(r"[^a-z0-9]+", " ", s)
         return s.strip()
 
-    def _extract_context(self, contexts: List[str], query: str) -> str:
-        """Extrai contexto mais relevante"""
-        if not contexts:
+    def _extrair_contexto(self, contextos: List[str], pergunta: str) -> str:
+        """Extrai o contexto mais relevante para a pergunta"""
+        if not contextos:
             return ""
             
-        query_terms = set(self._normalize(query).split())
-        best_score = 0
-        best_context = contexts[0]
+        termos_pergunta = set(self._normalizar(pergunta).split())
+        melhor_pontuacao = 0
+        melhor_contexto = contextos[0]
         
-        for ctx in contexts:
-            score = 0
+        for ctx in contextos:
+            pontuacao = 0
+            ctx_norm = self._normalizar(ctx)
+            pontuacao += sum(2 for termo in termos_pergunta if termo in ctx_norm)
             
-            # Score básico por termos
-            ctx_norm = self._normalize(ctx)
-            score += sum(2 for term in query_terms if term in ctx_norm)
-            
-            # Score por título
             if "\n" in ctx:
-                title = ctx.split("\n")[0].lower()
-                score += sum(3 for term in query_terms if term in title)
+                titulo = ctx.split("\n")[0].lower()
+                pontuacao += sum(3 for termo in termos_pergunta if termo in titulo)
                 
-            if score > best_score:
-                best_score = score
-                best_context = ctx
+            if pontuacao > melhor_pontuacao:
+                melhor_pontuacao = pontuacao
+                melhor_contexto = ctx
                 
-        return best_context
+        return melhor_contexto
 
-    def _direct_match_answer(self, contexts: List[str], query: str) -> Optional[str]:
-        """Return a direct answer from provided contexts if there's a strong match."""
-        q = self._normalize((query or "").strip())
-        if not q or not contexts:
+    def _buscar_resposta_direta(self, contextos: List[str], pergunta: str) -> Optional[str]:
+        """Busca uma resposta direta nos contextos se houver match forte"""
+        p = self._normalizar((pergunta or "").strip())
+        if not p or not contextos:
             return None
-        tokens = [t for t in q.split() if len(t) > 2]
-        for ctx in contexts:
-            parts = self._parse_context(ctx)
-            text = self._normalize(f"{parts['title']} {parts['section']} {parts['content']}")
-            if q and q in text:
-                return (parts["content"] or ctx).strip()
+            
+        tokens = [t for t in p.split() if len(t) > 2]
+        for ctx in contextos:
+            partes = self._analisar_contexto(ctx)
+            texto = self._normalizar(f"{partes['titulo']} {partes['secao']} {partes['conteudo']}")
+            
+            if p and p in texto:
+                return (partes["conteudo"] or ctx).strip()
+                
             if tokens:
-                overlap = sum(1 for t in tokens if t in text)
-                if overlap >= max(1, int(len(tokens) * 0.6)):
-                    return (parts["content"] or ctx).strip()
+                sobreposicao = sum(1 for t in tokens if t in texto)
+                if sobreposicao >= max(1, int(len(tokens) * 0.6)):
+                    return (partes["conteudo"] or ctx).strip()
         return None
 
-    def generate_response(self, query: str, contexts: Optional[List[str]] = None) -> Tuple[str, str]:
-        """Generate response using contexts or the FAQ payload."""
+    def gerar_resposta(self, pergunta: str, contextos: Optional[List[str]] = None) -> Tuple[str, str]:
+        """
+        Gera resposta usando contextos ou payload FAQ
+        
+        Args:
+            pergunta: Texto da pergunta
+            contextos: Lista opcional de contextos
+            
+        Returns:
+            Tupla (resposta, contexto_usado)
+        """
         try:
-            # Resolve context text
-            if contexts is None:
-                payload = get_faq_context(query)
-                context = payload.get("context", "") if isinstance(payload, dict) else str(payload or "")
+            # Resolve texto do contexto
+            if contextos is None:
+                payload = get_faq_context(pergunta)
+                contexto = payload.get("context", "") if isinstance(payload, dict) else str(payload or "")
             else:
-                if isinstance(contexts, list):
-                    context = self._extract_context(contexts, query)
-                elif isinstance(contexts, str):
-                    context = contexts
+                if isinstance(contextos, list):
+                    contexto = self._extrair_contexto(contextos, pergunta)
+                elif isinstance(contextos, str):
+                    contexto = contextos
                 else:
-                    context = ""
+                    contexto = ""
 
-            logger.info("Processing FAQ query: %s", query)
-            logger.debug("Using contexts: %s", context)
+            logger.info(f"Processando pergunta FAQ: {pergunta}")
+            logger.debug(f"Usando contextos: {contexto}")
 
-            if not context:
-                return "Não encontrei informações específicas sobre isso no sistema.", ""
+            if not contexto:
+                return "NÃ£o encontrei informaÃ§Ãµes especÃ­ficas sobre isso no sistema.", ""
 
-            # If we have explicit contexts list, try direct match first
-            if isinstance(contexts, list) and contexts:
-                direct = self._direct_match_answer(contexts, query)
-                if direct:
-                    return direct, context
+            # Se temos lista explÃ­cita de contextos, tenta match direto primeiro
+            if isinstance(contextos, list) and contextos:
+                direta = self._buscar_resposta_direta(contextos, pergunta)
+                if direta:
+                    return direta, contexto
 
-                # Page-intent widening: if query resembles a specific page, widen retrieval
-                qn = self._normalize((query or "").strip())
-                if "pagina" in qn and ("inicial" in qn or "perfil" in qn or "gestao" in qn or "operador" in qn):
-                    try:
-                        extra = retrieve_similar_context(query, top_k=12)
-                        if isinstance(extra, list) and extra:
-                            wider = contexts + [c for c in extra if isinstance(c, str)]
-                            new_context = self._extract_context(wider, query)
-                            if new_context:
-                                direct2 = self._direct_match_answer(wider, query)
-                                if direct2:
-                                    return direct2, new_context
-                                # fallback to new_context if no direct answer
-                                context = new_context
-                    except Exception:
-                        pass
+            # Se modelo nÃ£o estÃ¡ disponÃ­vel, retorna trecho determinÃ­stico do contexto
+            if self.modelo is None:
+                trecho = contexto.strip()
+                return (trecho[:1200], contexto)
 
-            # If model is unavailable, return a deterministic snippet from context
-            if self.model is None:
-                snippet = context.strip()
-                return (snippet[:1200], context)
-
-            chain = self.prompt | self.model
-            output = chain.invoke({"context": context, "query": query})
-            response = getattr(output, "content", None) or str(output)
-            logger.info("Generated response (truncated): %s", response[:200].replace("\n", " "))
-            return response.strip(), context
+            chain = self.prompt | self.modelo
+            saida = chain.invoke({"context": contexto, "query": pergunta})
+            resposta = getattr(saida, "content", None) or str(saida)
+            logger.info("Resposta gerada (truncada): %s", (resposta or "")[:200].replace("`n", " "))
+            return resposta.strip(), contexto
 
         except Exception:
-            logger.exception("Error generating FAQ response")
-            # Best-effort fallback to context snippet instead of generic error
+            logger.exception("Erro gerando resposta FAQ")
             try:
-                return (context[:1200], context) if context else ("Desculpe, ocorreu um erro ao processar sua pergunta.", "")
+                return (contexto[:1200], contexto) if contexto else ("Desculpe, ocorreu um erro ao processar sua pergunta.", "")
             except Exception:
                 return "Desculpe, ocorreu um erro ao processar sua pergunta.", ""
 
 
+def executar_agente_perguntas(pergunta: str, contextos: Optional[List[str]] = None) -> Tuple[str, str]:
+    """Ponto de entrada para o agente de perguntas (compat).
+
+    Mantido para chamadas existentes que usam nomenclatura em PT.
+    """
+    agente = AgentePerguntas()
+    return agente.gerar_resposta(pergunta, contextos)
+
+
+# Compatibilidade com o restante do cÃ³digo que espera English API
+class FAQAgent(AgentePerguntas):
+    def generate_response(self, query: str, contexts: Optional[List[str]] = None) -> Tuple[str, str]:
+        return super().gerar_resposta(query, contexts)
+
+
 def run_faq_agent(query: str, contexts: Optional[List[str]] = None) -> Tuple[str, str]:
-    """Entry point for FAQ agent"""
     agent = FAQAgent()
     return agent.generate_response(query, contexts)

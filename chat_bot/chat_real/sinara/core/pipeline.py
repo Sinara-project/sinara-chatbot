@@ -1,6 +1,7 @@
 import uuid
 from typing import Iterable, List, Optional
 import logging
+import os
 import traceback
 
 from ..services.memory_assistente import get_memory as get_memory_assistente
@@ -26,8 +27,29 @@ SYSTEM_KEYWORDS = {
 
 
 def _is_system_query(query: str) -> bool:
-    query_words = set(query.lower().split())
-    return bool(query_words & SYSTEM_KEYWORDS)
+    """Heurística simples para detectar dúvidas de uso do sistema/FAQ.
+    Usa palavras‑chave comuns do app (login, página, ponto, etc.)."""
+    try:
+        tokens = set((query or "").lower().split())
+    except Exception:
+        return False
+    return bool(tokens & SYSTEM_KEYWORDS)
+
+# Bypass minimalista de Guardrail para dúvidas de sistema/FAQ
+_original_run_guardrail = run_guardrail_agent
+
+def _run_guardrail_with_bypass(query: str, session_id: str | None):
+    try:
+        if _is_system_query(query):
+            return True, None
+    except Exception:
+        pass
+    return _original_run_guardrail(query, session_id or "")
+
+# Reencaminha chamadas internas para o wrapper com bypass
+run_guardrail_agent = _run_guardrail_with_bypass
+
+
 
 
 def _contexts_match_query(contexts: Optional[Iterable[str]], query: str) -> bool:
@@ -49,39 +71,111 @@ def _contexts_match_query(contexts: Optional[Iterable[str]], query: str) -> bool
     return False
 
 
-def _safe_call_agent(fn, *args, **kwargs):
-    """Auxiliar para chamar funções de agentes com registro de exceções e fallback seguro."""
-    try:
-        return fn(*args, **kwargs)
-    except Exception:
-        logger.exception("Agent call failed: %s", fn.__name__)
-        logger.debug("Traceback:\n%s", traceback.format_exc())
-        return ("Desculpe, ocorreu um erro ao processar sua pergunta.", "")
+
+
+# def _run_pipeline_old(query: str, session_id: str | None = None, agent: str = "auto", contexts: list | None = None) -> str:
+#     """
+#     Pipeline principal do chatbot
+#     """
+#     try:
+#         if agent == "auto":
+#             agent, _ = run_router_agent(query, session_id)
+            
+#         if agent == "tecnico":
+#             return run_rag_agent_tecnico(query, session_id)
+            
+#         if agent == "faq":
+#             answer, _ = run_faq_agent(query, contexts)
+#             return answer
+            
+        
+#         return "Desculpe, não entendi sua pergunta."
+        
+#     except Exception as e:
+#         logger.exception("Erro no pipeline")
+#         return f"Erro ao processar: {str(e)}"
 
 
 def run_pipeline(query: str, session_id: str | None = None, agent: str = "auto", contexts: list | None = None) -> str:
     """
-    Pipeline principal do chatbot
+    Pipeline principal com Guardrail global, roteamento por agente,
+    geração via agente especializado e validação final (Judge).
     """
     try:
-        if agent == "auto":
-            agent, _ = run_router_agent(query, session_id)
-            
-        if agent == "tecnico":
-            return run_rag_agent_tecnico(query, session_id)
-            
-        if agent == "faq":
-            answer, _ = run_faq_agent(query, contexts)
-            return answer
-            
-        # ... outros agents conforme necessário
-        
-        return "Desculpe, não entendi sua pergunta."
-        
+        # 1) Guardrail global 
+        try:
+            guard_is_valid, guard_output = run_guardrail_agent(query, session_id or "")
+            if not guard_is_valid:
+                return guard_output or "Desculpe, não posso atender a essa solicitação."
+        except Exception:
+            logger.exception("Guardrail falhou; seguindo com cautela")
+
+        # 2) Router (assistente | tecnico | organizacional | faq)
+        resolved_agent = agent or "auto"
+        reason = None
+        if resolved_agent == "auto":
+            try:
+                resolved_agent, reason = run_router_agent(query, session_id)
+            except Exception:
+                logger.exception("Router falhou; fallback para 'assistente'")
+                resolved_agent = "assistente"
+
+        # CLARIFY opcional (ativar com SINARA_CLARIFY=1): pergunta curta se rota parecer ambígua
+        try:
+            if os.getenv("SINARA_CLARIFY", "0").lower() in ("1", "true", "on"):
+                txt = (reason or "").lower()
+                parece_ambiguo = (not txt) or ("heur" in txt) or ("ambig" in txt)
+                if parece_ambiguo and resolved_agent in ("assistente", "tecnico", "organizacional"):
+                    return (
+                        "Para te ajudar melhor: sua dúvida é técnica (ETA), organizacional "
+                        "(gestão/processos) ou de uso do sistema (FAQ)? Responda com: "
+                        "'técnica', 'organizacional' ou 'sistema'."
+                    )
+        except Exception:
+            pass
+
+        # 3) Execução do agente especializado
+        rag_output = ""
+        rag_context = ""
+        try:
+            if resolved_agent == "tecnico":
+                rag_output, rag_context = run_rag_agent_tecnico(query, session_id or str(uuid.uuid4()))
+            elif resolved_agent == "organizacional":
+                rag_output, rag_context = run_rag_agent_organizacional(query, session_id or str(uuid.uuid4()), contexts)
+            elif resolved_agent == "assistente":
+                try:
+                    rag_output, rag_context = run_rag_agent_assistente(query, session_id or str(uuid.uuid4()), contexts)  # type: ignore
+                except TypeError:
+                    rag_output, rag_context = run_rag_agent_assistente(query, session_id or str(uuid.uuid4()))
+            elif resolved_agent == "faq":
+                rag_output, rag_context = run_faq_agent(query, contexts)
+            else:
+                rag_output, rag_context = run_faq_agent(query, contexts)
+        except Exception:
+            logger.exception("Falha ao executar agente '%s'", resolved_agent)
+            try:
+                rag_output, rag_context = run_faq_agent(query, contexts)
+            except Exception:
+                return "Desculpe, não consegui processar sua pergunta agora."
+
+        # 4) Validação final com Judge
+        try:
+            judge_is_valid, judge_output = run_judge_agent(
+                query, str(rag_output), str(rag_context or ""), session_id or "", resolved_agent
+            )
+        except Exception:
+            logger.exception("Judge falhou; retornando saída do RAG")
+            judge_is_valid, judge_output = True, None
+
+        final = str(rag_output) if judge_is_valid or not judge_output else str(judge_output)
+        return final
+
     except Exception as e:
         logger.exception("Erro no pipeline")
         return f"Erro ao processar: {str(e)}"
 
+
+ 
 
 def run_assistente_agent(query: str, session_id: str | None = None, agent: str = "assistente", contexts: list | None = None) -> str:
     """
@@ -177,4 +271,3 @@ if __name__ == "__main__":
 
     out = run_pipeline(query=args.query, session_id=args.session_id, agent=args.agent)
     print(out)
-
