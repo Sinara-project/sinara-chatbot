@@ -15,6 +15,7 @@ No sistema, o usuário pode:
 * Receber suporte sobre dashboards, gráficos e alertas gerados pela plataforma.
 * Acessar informações sobre relatórios dinâmicos, históricos de preenchimento e boas práticas de gestão.
 * Obter ajuda rápida para dúvidas frequentes, tanto para administradores quanto para operadores.
+*Pedir informações  sobre as funcinalidades do aplicativo como bater ponto , notifcações, pagina inicial e etc
 
 # OBJETIVO
 
