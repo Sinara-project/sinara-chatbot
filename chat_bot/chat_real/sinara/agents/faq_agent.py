@@ -1,4 +1,4 @@
-import os
+﻿import os
 import logging
 import re
 import unicodedata
@@ -17,7 +17,7 @@ logger.setLevel(logging.INFO)
 
 
 class AgentePerguntas:
-    """Agente responsável por responder perguntas frequentes do sistema"""
+    """Agente responsÃ¡vel por responder perguntas frequentes do sistema"""
     
     def __init__(self):
         """Inicializa o agente com modelo e prompt"""
@@ -25,7 +25,7 @@ class AgentePerguntas:
         self.prompt = self._criar_prompt()
 
     def _inicializar_modelo(self) -> Optional[ChatGoogleGenerativeAI]:
-        """Inicializa o modelo de IA com configurações do ambiente"""
+        """Inicializa o modelo de IA com configuraÃ§Ãµes do ambiente"""
         chave_api = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not chave_api:
             return None
@@ -50,15 +50,15 @@ class AgentePerguntas:
         return ChatPromptTemplate.from_messages([
             (
                 "system",
-                """Você é um especialista no sistema Sinara, focado em explicar suas funcionalidades.
+                """VocÃª Ã© um especialista no sistema Sinara, focado em explicar suas funcionalidades.
 
 IMPORTANTE:
-1. Use SOMENTE as informações do contexto fornecido
-2. Se encontrar a informação no contexto, forneça uma resposta direta e objetiva
-3. Inclua detalhes específicos mencionados no contexto
-4. Se a informação não existir no contexto, responda apenas: "Não encontrei informações específicas sobre isso no sistema"
-5. Não mencione o contexto na resposta, apenas use seu conteúdo
-6. Não invente ou adicione informações além do contexto""",
+1. Use SOMENTE as informaÃ§Ãµes do contexto fornecido
+2. Se encontrar a informaÃ§Ã£o no contexto, forneÃ§a uma resposta direta e objetiva
+3. Inclua detalhes especÃ­ficos mencionados no contexto
+4. Se a informaÃ§Ã£o nÃ£o existir no contexto, responda apenas: "NÃ£o encontrei informaÃ§Ãµes especÃ­ficas sobre isso no sistema"
+5. NÃ£o mencione o contexto na resposta, apenas use seu conteÃºdo
+6. NÃ£o invente ou adicione informaÃ§Ãµes alÃ©m do contexto""",
             ),
             (
                 "human",
@@ -68,12 +68,12 @@ IMPORTANTE:
 PERGUNTA:
 {query}
 
-Responda usando APENAS as informações do contexto acima.""",
+Responda usando APENAS as informaÃ§Ãµes do contexto acima.""",
             ),
         ])
 
     def _analisar_contexto(self, ctx: str) -> Dict[str, str]:
-        """Analisa e separa o contexto em título, seção e conteúdo"""
+        """Analisa e separa o contexto em tÃ­tulo, seÃ§Ã£o e conteÃºdo"""
         partes = ctx.split("\n")
         resultado = {"titulo": "", "secao": "", "conteudo": ""}
         if len(partes) >= 3:
@@ -165,15 +165,15 @@ Responda usando APENAS as informações do contexto acima.""",
             logger.debug(f"Usando contextos: {contexto}")
 
             if not contexto:
-                return "Não encontrei informações específicas sobre isso no sistema.", ""
+                return "NÃ£o encontrei informaÃ§Ãµes especÃ­ficas sobre isso no sistema.", ""
 
-            # Se temos lista explícita de contextos, tenta match direto primeiro
+            # Se temos lista explÃ­cita de contextos, tenta match direto primeiro
             if isinstance(contextos, list) and contextos:
                 direta = self._buscar_resposta_direta(contextos, pergunta)
                 if direta:
                     return direta, contexto
 
-            # Se modelo não está disponível, retorna trecho determinístico do contexto
+            # Se modelo nÃ£o estÃ¡ disponÃ­vel, retorna trecho determinÃ­stico do contexto
             if self.modelo is None:
                 trecho = contexto.strip()
                 return (trecho[:1200], contexto)
@@ -181,7 +181,7 @@ Responda usando APENAS as informações do contexto acima.""",
             chain = self.prompt | self.modelo
             saida = chain.invoke({"context": contexto, "query": pergunta})
             resposta = getattr(saida, "content", None) or str(saida)
-            logger.info(f"Resposta gerada (truncada): {resposta[:200].replace('\n', ' ')}")
+            logger.info("Resposta gerada (truncada): %s", (resposta or "")[:200].replace("`n", " "))
             return resposta.strip(), contexto
 
         except Exception:
@@ -201,7 +201,7 @@ def executar_agente_perguntas(pergunta: str, contextos: Optional[List[str]] = No
     return agente.gerar_resposta(pergunta, contextos)
 
 
-# Compatibilidade com o restante do código que espera English API
+# Compatibilidade com o restante do cÃ³digo que espera English API
 class FAQAgent(AgentePerguntas):
     def generate_response(self, query: str, contexts: Optional[List[str]] = None) -> Tuple[str, str]:
         return super().gerar_resposta(query, contexts)
