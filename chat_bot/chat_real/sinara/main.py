@@ -6,7 +6,7 @@ from .utils.logging_config import setup_logging
 from .api.routes.chat import router as chat_router
 
 # Configuração inicial
-settings = Settings()  # Create settings instance first
+settings = Settings()  # cria instância de configurações
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ app.add_middleware(
 # Rotas
 app.include_router(chat_router, prefix="/api")
 
-# Add health check route
+#adicionando endpoint de health check
 @app.get("/health")
 async def health_check():
     """Verifica status da API"""

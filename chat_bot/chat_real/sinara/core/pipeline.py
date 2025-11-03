@@ -258,9 +258,7 @@ def run_assistente_agent(query: str, session_id: str | None = None, agent: str =
 
 
 if __name__ == "__main__":
-    # CLI simples para executar o pipeline como módulo
-    # Uso (a partir da raiz do repositório):
-    #   python -m chat_bot.chat_real.sinara.pipeline --query "oi" --agent assistente --session test-1
+   
     import argparse
 
     parser = argparse.ArgumentParser(description="Run Sinara pipeline once")

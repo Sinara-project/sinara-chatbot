@@ -25,9 +25,8 @@ def get_conn():
     return psycopg2.connect(DATABASE_URL)
 
 
-# ---------------------------
 # Schemas Pydantic
-# ---------------------------
+
 
 
 class CriarForms(BaseModel):
@@ -84,9 +83,7 @@ class ShiftScheduleArgs(BaseModel):
     limit: int = 20
 
 
-# ---------------------------
 # Funções auxiliares
-# ---------------------------
 
 
 def _optional_date_clause(field: str, df: Optional[str], dt: Optional[str], args: list) -> str:
@@ -110,9 +107,7 @@ def _safe_float(v) -> Optional[float]:
         return None
 
 
-# ---------------------------
 # TOOLS
-# ---------------------------
 
 
 @tool("criar_form", args_schema=CriarForms)

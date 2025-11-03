@@ -45,10 +45,10 @@ class RAGAgent:
         with open(fewshot_path, "r", encoding="utf-8") as f:
             raw_shots = json.load(f)
 
-        # Convert fewshot examples into the shape expected by FewShotChatMessagePromptTemplate
+        # converte fewshots para o formato esperado
         examples = []
         for ex in raw_shots:
-            # expected structure in fewshot.json: {"human": "...", "ai": "..."}
+            # Garantir chaves 'human' e 'ai'
             examples.append({"human": ex.get("human", ""), "ai": ex.get("ai", "")})
 
         example_prompt = ChatPromptTemplate.from_messages([
@@ -61,8 +61,7 @@ class RAGAgent:
             example_prompt=example_prompt,
         )
 
-        # Prompt instructions: check context first, prefer context answers, else use model knowledge,
-        # if uncertain say you don't have enough info.
+        #prompt final
         return ChatPromptTemplate.from_messages([
             ("system", system_text),
             fewshots,
@@ -79,10 +78,10 @@ class RAGAgent:
 
     def _extract_title_and_content(self, ctx) -> Tuple[Optional[str], str]:
         """
-        Accepts context items that are either:
-         - dict with keys 'title'/'content'
-         - string in form "Title\nSection\nContent" or just "Content"
-        Returns (title_or_None, content_string)
+        Aceita itens de contexto que são:
+         - dicionário com chaves 'title'/'content'
+         - string no formato "Título\nSeção\nConteúdo" ou apenas "Conteúdo"
+        Retorna (titulo_ou_None, conteudo_string)
         """
         if isinstance(ctx, dict):
             title = ctx.get("title") or ctx.get("titulo")
@@ -91,7 +90,7 @@ class RAGAgent:
         if isinstance(ctx, str):
             parts = [p.strip() for p in ctx.splitlines() if p.strip()]
             if len(parts) >= 3:
-                # assume last line(s) are the main content
+                # primeiro = title, segundo = section, resto = content
                 content = " ".join(parts[2:])
                 title = parts[0]
                 return title, content.strip()
@@ -108,10 +107,10 @@ class RAGAgent:
 
     def _find_matching_context(self, query: str, contexts: Iterable) -> Optional[str]:
         """
-        Heurística: retorna o conteúdo do primeiro contexto que claramente responde ao query.
+        Heurística: retorna o conteúdo do primeiro contexto que claramente responde à consulta.
         Critérios:
-         - query (frase completa) aparece no conteúdo (case-insensitive), ou
-         - tokens do query atingem threshold de presença no conteúdo.
+         - consulta (frase completa) aparece no conteúdo (sem distinção entre maiúsculas/minúsculas), ou
+         - tokens da consulta atingem limite mínimo de presença no conteúdo.
         """
         if not contexts:
             return None
@@ -123,14 +122,14 @@ class RAGAgent:
             if not content:
                 continue
             content_norm = self._normalize(content)
-            # full phrase match
+            # frase completa
             if q_norm and q_norm in content_norm:
-                logger.info("Context exact phrase match found (title=%s)", title)
+                logger.info("frase completa (title=%s)", title)
                 return content
-            # token matches
+            # o token 
             hits = sum(1 for t in q_tokens if t in content_norm)
             if q_tokens and hits >= max(1, len(q_tokens) // 2):
-                logger.info("Context token match found (title=%s) hits=%d/%d", title, hits, len(q_tokens))
+                logger.info("context (title=%s) hits=%d/%d", title, hits, len(q_tokens))
                 return content
         return None
 
@@ -160,21 +159,21 @@ class RAGAgent:
         Primeiro verifica se algum contexto (fornecido ou recuperado) responde diretamente;
         se sim, retorna o texto do contexto. Caso contrário, chama o modelo.
         """
-        # Prefer provided_contexts (from HTTP handler) if present
+        # Preferir contextos fornecidos (do manipulador HTTP) se presentes
         contexts_to_check = provided_contexts if provided_contexts is not None else retrieve_similar_context(query, top_k=5)
 
-        # Try direct context match
+        # Tentar correspondência direta de contexto
         try:
             matched = self._find_matching_context(query, contexts_to_check)
             if matched:
-                # Return context verbatim (user wanted precise context text)
+                # Retornar contexto literal (usuário queria texto preciso do contexto)
                 logger.info("Respondendo diretamente com contexto encontrado.")
-                # return (answer_text, context_used)
+                # retorna (texto_resposta, contexto_usado)
                 return matched, matched
         except Exception:
             logger.exception("Erro durante verificação direta de contexto")
 
-        # If no direct context match, continue with standard flow
+        # Se não houver correspondência direta de contexto, continuar com o fluxo padrão
         context_str = "\n\n".join(
             (self._extract_title_and_content(c)[1] for c in contexts_to_check)
         ) if contexts_to_check else self._get_context(query)
@@ -216,18 +215,19 @@ class RAGAgent:
 
 
 def run_rag_agent_organizacional(query: str, session_id: str, contexts: list | None = None) -> Tuple[str, str]:
-    """Resilient wrapper: if model init fails (e.g., missing API key),
-    return a deterministic snippet from context as fallback.
+    """
+    Wrapper resiliente: se a inicialização do modelo falhar (ex: chave API ausente),
+    retorna um trecho determinístico do contexto como alternativa.
     """
     try:
         agent = RAGAgent()
-        logger.info("Incoming request: query=%s session_id=%s", query, session_id)
+        logger.info("Iniciando agente: query=%s session_id=%s", query, session_id)
         if contexts:
-            logger.debug("Using provided contexts: %s", contexts)
+            logger.debug("Usando contextos fornecidos: %s", contexts)
         return agent.generate_response(query, session_id, contexts)
     except Exception as e:
         logger.error("Falha ao inicializar agente organizacional: %s", e)
-        # Deterministic fallback based on contexto.json
+        # fallback determinístico
         try:
             ctx_list = retrieve_similar_context(query, top_k=5)
             context_joined = "\n\n".join(ctx_list) if isinstance(ctx_list, list) else str(ctx_list or "")
