@@ -18,7 +18,7 @@ load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
 
-# System-related keywords that should route to FAQ/organizational
+# palavras chaves do sistema para roteamento FAQ
 SYSTEM_KEYWORDS = {
     'página', 'perfil', 'login', 'acesso', 'dashboard', 'formulário', 'formulario',
     'notificação', 'alerta', 'ponto', 'registro', 'cadastro', 'permissão', 'permissao',
@@ -79,7 +79,7 @@ _ROUTER_PROMPT = ChatPromptTemplate.from_messages(
 
 
 def _is_system_query(query: str) -> bool:
-    """Check if query is about system features rather than technical water treatment"""
+    """Verifica se a consulta é sobre recursos do sistema em vez de tratamento de água técnico"""
     query_words = set(query.lower().split())
     return bool(query_words & SYSTEM_KEYWORDS)
 
@@ -152,10 +152,10 @@ def run_router_agent(query: str, session_id: Optional[str] = None) -> Tuple[str,
     if any(k in q for k in organizacional_kw):
         return "organizacional", "Heurística: termos organizacionais"
     
-    # Check for system-related queries
+    # verifica se é consulta sobre o sistema
     if _is_system_query(qtext):
-        logger.info("Query matched system keywords, routing to FAQ")
-        return "faq", "Query relates to system features"
+        logger.info("Consulta corresponde a palavras-chave do sistema, roteando para FAQ")
+        return "faq", "Consulta relacionada a recursos do sistema"
 
     return "assistente", "Heurística: padrão"
 
