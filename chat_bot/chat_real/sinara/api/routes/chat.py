@@ -54,6 +54,7 @@ async def chat_endpoint(request: ChatRequest):
         
         # Recupera contextos
         contexts = retrieve_similar_context(request.query)
+        logger.debug(f"Contextos encontrados: {len(contexts) if contexts else 0}")
         
         # Define agente
         resolved_agent = request.agent
@@ -69,24 +70,38 @@ async def chat_endpoint(request: ChatRequest):
             contexts=contexts
         )
         
-        # Garante que answer é string
-        if isinstance(answer, tuple):
-            answer = str(answer[0])  # Pega primeiro elemento se for tupla
+        logger.debug(f"Resposta bruta do pipeline: tipo={type(answer)}, valor={str(answer)[:200]}")
         
-        return ChatResponse(
+        # Tratamento robusto da resposta
+        if answer is None:
+            answer = "Desculpe, não foi possível gerar uma resposta."
+        elif isinstance(answer, tuple):
+            answer = str(answer[0] if answer and answer[0] else "Resposta não disponível")
+        elif isinstance(answer, (list, dict)):
+            answer = str(answer)
+        else:
+            answer = str(answer)
+            
+        # Remove quebras de linha extras e espaços
+        answer = answer.strip()
+        
+        response = ChatResponse(
             ok=True,
             agent=resolved_agent,
             session_id=request.session_id,
             contexts=contexts if isinstance(contexts, list) else [],
-            answer=str(answer)  # Força conversão para string
+            answer=answer
         )
+        
+        logger.info(f"Resposta final gerada: {answer[:200]}")
+        return response
 
     except Exception as e:
         logger.exception("Erro no processamento")
         return ChatResponse(
             ok=False,
-            agent=resolved_agent,
+            agent=resolved_agent if 'resolved_agent' in locals() else "error",
             session_id=request.session_id,
             contexts=[],
-            answer=f"Erro: {str(e)}"
+            answer=f"Erro ao processar sua pergunta: {str(e)}"
         )
